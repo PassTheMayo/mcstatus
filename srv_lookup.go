@@ -1,12 +1,11 @@
 package mcstatus
 
 import (
-	"fmt"
 	"net"
 )
 
 func lookupSRV(host string, port uint16) (*net.SRV, error) {
-	_, addrs, err := net.LookupSRV("minecraft", "tcp", fmt.Sprintf("%s:%d", host, port))
+	_, addrs, err := net.LookupSRV("minecraft", "tcp", host)
 
 	if err != nil {
 		return nil, err

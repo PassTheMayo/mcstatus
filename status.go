@@ -70,7 +70,7 @@ func Status(host string, port uint16, options ...StatusOptions) (*JavaStatusResp
 	if opts.EnableSRV {
 		record, err := lookupSRV(host, port)
 
-		if err == nil {
+		if err == nil && record != nil {
 			host = record.Target
 			port = record.Port
 
