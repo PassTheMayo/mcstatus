@@ -47,6 +47,12 @@ type JavaStatusResponse struct {
 	} `json:"players"`
 	Description Description `json:"description"`
 	Favicon     Favicon     `json:"favicon"`
+	SRVResult   *SRVRecord  `json:"srv_result"`
+}
+
+type SRVRecord struct {
+	Host string `json:"host"`
+	Port uint16 `json:"port"`
 }
 
 type StatusOptions struct {
@@ -59,12 +65,19 @@ type StatusOptions struct {
 func Status(host string, port uint16, options ...StatusOptions) (*JavaStatusResponse, error) {
 	opts := parseOptions(options...)
 
+	var srvResult *SRVRecord = nil
+
 	if opts.EnableSRV {
 		record, err := lookupSRV(host, port)
 
 		if err == nil {
 			host = record.Target
 			port = record.Port
+
+			srvResult = &SRVRecord{
+				Host: record.Target,
+				Port: record.Port,
+			}
 		}
 	}
 
@@ -170,6 +183,7 @@ func Status(host string, port uint16, options ...StatusOptions) (*JavaStatusResp
 			Players:     result.Players,
 			Description: parseDescription(result.Description),
 			Favicon:     parseFavicon(result.Favicon),
+			SRVResult:   srvResult,
 		}, nil
 	}
 }
