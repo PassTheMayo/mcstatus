@@ -16,6 +16,11 @@ func (d Description) String() string {
 	return stripFormattingRegExp.ReplaceAllString(d.raw, "")
 }
 
+// Raw returns the raw description with formatting
+func (d Description) Raw() string {
+	return d.raw
+}
+
 func parseChatObject(m map[string]interface{}) string {
 	result := ""
 
