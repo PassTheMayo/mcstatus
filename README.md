@@ -17,9 +17,9 @@ import "github.com/PassTheMayo/mcstatus"
 func main() {
     response, err := mcstatus.Status("play.hypixel.net", 25565)
 
-	if err != nil {
-		panic(err)
-	}
+    if err != nil {
+        panic(err)
+    }
 
     fmt.Println(response)
 }
