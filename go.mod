@@ -1,3 +1,3 @@
-module github.com/mcstatus-io/MCStatus
+module github.com/PassTheMayo/mcstatus
 
 go 1.17
