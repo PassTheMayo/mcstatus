@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	stripFormattingRegExp = regexp.MustCompile("\u00A7[0-9A-Za-z]")
+	stripFormattingRegExp = regexp.MustCompile("\u00A7[0-9a-gk-or]")
 	colorLookupTable      = map[string]string{
 		"black":        "0",
 		"dark_blue":    "1",

@@ -8,14 +8,14 @@ import (
 )
 
 var (
-	defaultStatusOptions = StatusOptions{
+	defaultJavaStatusOptions = JavaStatusOptions{
 		EnableSRV:       true,
 		Timeout:         time.Second * 5,
 		ProtocolVersion: 47,
 	}
 )
 
-type rawStatusResponse struct {
+type rawStatus struct {
 	Version struct {
 		Name     string `json:"name"`
 		Protocol int    `json:"protocol"`
@@ -50,20 +50,15 @@ type JavaStatusResponse struct {
 	SRVResult   *SRVRecord  `json:"srv_result"`
 }
 
-type SRVRecord struct {
-	Host string `json:"host"`
-	Port uint16 `json:"port"`
-}
-
-type StatusOptions struct {
+type JavaStatusOptions struct {
 	EnableSRV       bool
 	Timeout         time.Duration
 	ProtocolVersion int
 }
 
 // Status retrieves the status of any Minecraft server
-func Status(host string, port uint16, options ...StatusOptions) (*JavaStatusResponse, error) {
-	opts := parseStatusOptions(options...)
+func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatusResponse, error) {
+	opts := parseJavaStatusOptions(options...)
 
 	var srvResult *SRVRecord = nil
 
@@ -152,45 +147,54 @@ func Status(host string, port uint16, options ...StatusOptions) (*JavaStatusResp
 	// Response packet
 	// https://wiki.vg/Server_List_Ping#Response
 	{
-		if _, _, err := readVarInt(conn); err != nil {
-			return nil, err
+		// Packet length - varint
+		{
+			if _, _, err := readVarInt(conn); err != nil {
+				return nil, err
+			}
 		}
 
-		packetType, _, err := readVarInt(conn)
+		// Packet type - varint
+		{
+			packetType, _, err := readVarInt(conn)
 
-		if err != nil {
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
+
+			if packetType != 0 {
+				return nil, ErrUnexpectedResponse
+			}
 		}
 
-		if packetType != 0 {
-			return nil, ErrUnexpectedResponse
+		// Data - string
+		{
+			data, err := readString(conn)
+
+			if err != nil {
+				return nil, err
+			}
+
+			result := &rawStatus{}
+
+			if err = json.Unmarshal([]byte(data), result); err != nil {
+				return nil, err
+			}
+
+			return &JavaStatusResponse{
+				Version:     result.Version,
+				Players:     result.Players,
+				Description: parseDescription(result.Description),
+				Favicon:     parseFavicon(result.Favicon),
+				SRVResult:   srvResult,
+			}, nil
 		}
-
-		data, err := readString(conn)
-
-		if err != nil {
-			return nil, err
-		}
-
-		result := &rawStatusResponse{}
-
-		if err = json.Unmarshal([]byte(data), result); err != nil {
-			return nil, err
-		}
-
-		return &JavaStatusResponse{
-			Version:     result.Version,
-			Players:     result.Players,
-			Description: parseDescription(result.Description),
-			Favicon:     parseFavicon(result.Favicon),
-			SRVResult:   srvResult,
-		}, nil
 	}
 }
 
-func parseStatusOptions(opts ...StatusOptions) StatusOptions {
+func parseJavaStatusOptions(opts ...JavaStatusOptions) JavaStatusOptions {
 	if len(opts) < 1 {
-		return defaultStatusOptions
+		return defaultJavaStatusOptions
 	}
 
 	return opts[0]
