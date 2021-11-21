@@ -29,6 +29,22 @@ func main() {
 }
 ```
 
+### Bedrock Status
+
+```go
+import "github.com/PassTheMayo/mcstatus"
+
+func main() {
+    response, err := mcstatus.StatusBedrock("127.0.0.1", 19132)
+
+    if err != nil {
+        panic(err)
+    }
+
+    fmt.Println(response)
+}
+```
+
 ### Basic Query
 
 ```go
