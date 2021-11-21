@@ -1,13 +1,7 @@
 package mcstatus
 
 import (
-	"errors"
 	"io"
-)
-
-var (
-	ErrVarIntTooBig = errors.New("size of VarInt exceeds maximum data size")
-	ErrVarIntNoData = errors.New("failed to read any bytes while reading varint")
 )
 
 func readVarInt(r io.Reader) (int32, int, error) {
@@ -24,7 +18,7 @@ func readVarInt(r io.Reader) (int32, int, error) {
 		}
 
 		if n < 1 {
-			return 0, numRead, ErrVarIntNoData
+			return 0, numRead, io.EOF
 		}
 
 		value := (data[0] & 0b01111111)
@@ -58,7 +52,7 @@ func readVarLong(r io.Reader) (int64, int, error) {
 		}
 
 		if n < 1 {
-			return 0, numRead, ErrVarIntNoData
+			return 0, numRead, io.EOF
 		}
 
 		value := (data[0] & 0b01111111)

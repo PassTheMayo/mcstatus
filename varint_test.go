@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	mcstatus "github.com/mcstatus-io/MCStatus"
+	"github.com/PassTheMayo/mcstatus"
 )
 
 type test struct {

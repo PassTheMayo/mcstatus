@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	defaultOptions = StatusOptions{
+	defaultStatusOptions = StatusOptions{
 		EnableSRV:       true,
 		Timeout:         time.Second * 5,
 		ProtocolVersion: 47,
@@ -63,7 +63,7 @@ type StatusOptions struct {
 
 // Status retrieves the status of any Minecraft server
 func Status(host string, port uint16, options ...StatusOptions) (*JavaStatusResponse, error) {
-	opts := parseOptions(options...)
+	opts := parseStatusOptions(options...)
 
 	var srvResult *SRVRecord = nil
 
@@ -163,7 +163,7 @@ func Status(host string, port uint16, options ...StatusOptions) (*JavaStatusResp
 		}
 
 		if packetType != 0 {
-			return nil, fmt.Errorf("unknown packet type returned from server: %d", packetType)
+			return nil, ErrUnexpectedResponse
 		}
 
 		data, err := readString(conn)
@@ -188,9 +188,9 @@ func Status(host string, port uint16, options ...StatusOptions) (*JavaStatusResp
 	}
 }
 
-func parseOptions(opts ...StatusOptions) StatusOptions {
+func parseStatusOptions(opts ...StatusOptions) StatusOptions {
 	if len(opts) < 1 {
-		return defaultOptions
+		return defaultStatusOptions
 	}
 
 	return opts[0]

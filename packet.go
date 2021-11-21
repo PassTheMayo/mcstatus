@@ -3,17 +3,9 @@ package mcstatus
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"io"
 	"io/ioutil"
 	"math"
-)
-
-var (
-	// ErrEmptyBuffer is a generic error for any read methods where the buffer array doesn't contain enough data to read the whole type
-	ErrEmptyBuffer = errors.New("packet does not contain enough data to read this type")
-	// ErrInvalidBoolean
-	ErrInvalidBoolean = errors.New("cannot ReadBoolean() as value is neither 0 or 1")
 )
 
 // Packet contains helper functions for reading and writing buffer packets to the TCP stream
@@ -109,6 +101,24 @@ func (p *Packet) WriteShort(val int16) error {
 	return err
 }
 
+func (p *Packet) ReadShortLE() (int16, error) {
+	data := make([]byte, 2)
+
+	_, err := p.b.Read(data)
+
+	return int16(binary.LittleEndian.Uint16(data)), err
+}
+
+func (p *Packet) WriteShortLE(val int16) error {
+	data := make([]byte, 2)
+
+	binary.LittleEndian.PutUint16(data, uint16(val))
+
+	_, err := p.b.Write(data)
+
+	return err
+}
+
 func (p *Packet) ReadUnsignedShort() (uint16, error) {
 	data := make([]byte, 2)
 
@@ -121,6 +131,24 @@ func (p *Packet) WriteUnsignedShort(val uint16) error {
 	data := make([]byte, 2)
 
 	binary.BigEndian.PutUint16(data, val)
+
+	_, err := p.b.Write(data)
+
+	return err
+}
+
+func (p *Packet) ReadUnsignedShortLE() (uint16, error) {
+	data := make([]byte, 2)
+
+	_, err := p.b.Read(data)
+
+	return binary.LittleEndian.Uint16(data), err
+}
+
+func (p *Packet) WriteUnsignedShortLE(val uint16) error {
+	data := make([]byte, 2)
+
+	binary.LittleEndian.PutUint16(data, val)
 
 	_, err := p.b.Write(data)
 
@@ -145,6 +173,24 @@ func (p *Packet) WriteInt(val int32) error {
 	return err
 }
 
+func (p *Packet) ReadIntLE() (int32, error) {
+	data := make([]byte, 4)
+
+	_, err := p.b.Read(data)
+
+	return int32(binary.LittleEndian.Uint32(data)), err
+}
+
+func (p *Packet) WriteIntLE(val int32) error {
+	data := make([]byte, 4)
+
+	binary.LittleEndian.PutUint32(data, uint32(val))
+
+	_, err := p.b.Write(data)
+
+	return err
+}
+
 func (p *Packet) ReadUnsignedInt() (uint32, error) {
 	data := make([]byte, 4)
 
@@ -157,6 +203,24 @@ func (p *Packet) WriteUnsignedInt(val uint32) error {
 	data := make([]byte, 4)
 
 	binary.BigEndian.PutUint32(data, val)
+
+	_, err := p.b.Write(data)
+
+	return err
+}
+
+func (p *Packet) ReadUnsignedIntLE() (uint32, error) {
+	data := make([]byte, 4)
+
+	_, err := p.b.Read(data)
+
+	return binary.LittleEndian.Uint32(data), err
+}
+
+func (p *Packet) WriteUnsignedIntLE(val uint32) error {
+	data := make([]byte, 4)
+
+	binary.LittleEndian.PutUint32(data, val)
 
 	_, err := p.b.Write(data)
 
@@ -181,6 +245,24 @@ func (p *Packet) WriteLong(val int64) error {
 	return err
 }
 
+func (p *Packet) ReadLongLE() (int64, error) {
+	data := make([]byte, 8)
+
+	_, err := p.b.Read(data)
+
+	return int64(binary.LittleEndian.Uint64(data)), err
+}
+
+func (p *Packet) WriteLongLE(val int64) error {
+	data := make([]byte, 8)
+
+	binary.LittleEndian.PutUint64(data, uint64(val))
+
+	_, err := p.b.Write(data)
+
+	return err
+}
+
 func (p *Packet) ReadUnsignedLong() (uint64, error) {
 	data := make([]byte, 8)
 
@@ -193,6 +275,24 @@ func (p *Packet) WriteUnsignedLong(val uint64) error {
 	data := make([]byte, 8)
 
 	binary.BigEndian.PutUint64(data, val)
+
+	_, err := p.b.Write(data)
+
+	return err
+}
+
+func (p *Packet) ReadUnsignedLongLE() (uint64, error) {
+	data := make([]byte, 8)
+
+	_, err := p.b.Read(data)
+
+	return binary.LittleEndian.Uint64(data), err
+}
+
+func (p *Packet) WriteUnsignedLongLE(val uint64) error {
+	data := make([]byte, 8)
+
+	binary.LittleEndian.PutUint64(data, val)
 
 	_, err := p.b.Write(data)
 
