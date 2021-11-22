@@ -69,14 +69,19 @@ type Description struct {
 	raw string
 }
 
-// String converts the description into raw text without formatting
+// String returns the description with formatting
 func (d Description) String() string {
-	return stripFormattingRegExp.ReplaceAllString(d.raw, "")
+	return d.raw
 }
 
 // Raw returns the raw description with formatting
 func (d Description) Raw() string {
 	return d.raw
+}
+
+// Clean returns the description with no formatting
+func (d Description) Clean() string {
+	return stripFormattingRegExp.ReplaceAllString(d.raw, "")
 }
 
 // HTML returns the description with HTML formatting
