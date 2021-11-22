@@ -73,17 +73,17 @@ func (p *Packet) WriteBytes(val []byte) error {
 	return err
 }
 
-func (p *Packet) ReadUnsignedByte() (uint8, error) {
+func (p *Packet) ReadUInt8() (uint8, error) {
 	val, err := p.ReadByte()
 
 	return uint8(val), err
 }
 
-func (p *Packet) WriteUnsignedByte(val uint8) error {
+func (p *Packet) WriteUInt8(val uint8) error {
 	return p.WriteByte(byte(val))
 }
 
-func (p *Packet) ReadShort() (int16, error) {
+func (p *Packet) ReadInt16BE() (int16, error) {
 	data := make([]byte, 2)
 
 	_, err := p.b.Read(data)
@@ -91,7 +91,7 @@ func (p *Packet) ReadShort() (int16, error) {
 	return int16(binary.BigEndian.Uint16(data)), err
 }
 
-func (p *Packet) WriteShort(val int16) error {
+func (p *Packet) WriteInt16BE(val int16) error {
 	data := make([]byte, 2)
 
 	binary.BigEndian.PutUint16(data, uint16(val))
@@ -101,7 +101,7 @@ func (p *Packet) WriteShort(val int16) error {
 	return err
 }
 
-func (p *Packet) ReadShortLE() (int16, error) {
+func (p *Packet) ReadInt16LE() (int16, error) {
 	data := make([]byte, 2)
 
 	_, err := p.b.Read(data)
@@ -109,7 +109,7 @@ func (p *Packet) ReadShortLE() (int16, error) {
 	return int16(binary.LittleEndian.Uint16(data)), err
 }
 
-func (p *Packet) WriteShortLE(val int16) error {
+func (p *Packet) WriteInt16LE(val int16) error {
 	data := make([]byte, 2)
 
 	binary.LittleEndian.PutUint16(data, uint16(val))
@@ -119,7 +119,7 @@ func (p *Packet) WriteShortLE(val int16) error {
 	return err
 }
 
-func (p *Packet) ReadUnsignedShort() (uint16, error) {
+func (p *Packet) ReadUInt16BE() (uint16, error) {
 	data := make([]byte, 2)
 
 	_, err := p.b.Read(data)
@@ -127,7 +127,7 @@ func (p *Packet) ReadUnsignedShort() (uint16, error) {
 	return binary.BigEndian.Uint16(data), err
 }
 
-func (p *Packet) WriteUnsignedShort(val uint16) error {
+func (p *Packet) WriteUInt16BE(val uint16) error {
 	data := make([]byte, 2)
 
 	binary.BigEndian.PutUint16(data, val)
@@ -137,7 +137,7 @@ func (p *Packet) WriteUnsignedShort(val uint16) error {
 	return err
 }
 
-func (p *Packet) ReadUnsignedShortLE() (uint16, error) {
+func (p *Packet) ReadUInt16LE() (uint16, error) {
 	data := make([]byte, 2)
 
 	_, err := p.b.Read(data)
@@ -145,7 +145,7 @@ func (p *Packet) ReadUnsignedShortLE() (uint16, error) {
 	return binary.LittleEndian.Uint16(data), err
 }
 
-func (p *Packet) WriteUnsignedShortLE(val uint16) error {
+func (p *Packet) WriteUInt16LE(val uint16) error {
 	data := make([]byte, 2)
 
 	binary.LittleEndian.PutUint16(data, val)
@@ -155,7 +155,7 @@ func (p *Packet) WriteUnsignedShortLE(val uint16) error {
 	return err
 }
 
-func (p *Packet) ReadInt() (int32, error) {
+func (p *Packet) ReadInt32BE() (int32, error) {
 	data := make([]byte, 4)
 
 	_, err := p.b.Read(data)
@@ -163,7 +163,7 @@ func (p *Packet) ReadInt() (int32, error) {
 	return int32(binary.BigEndian.Uint32(data)), err
 }
 
-func (p *Packet) WriteInt(val int32) error {
+func (p *Packet) WriteInt32BE(val int32) error {
 	data := make([]byte, 4)
 
 	binary.BigEndian.PutUint32(data, uint32(val))
@@ -173,7 +173,7 @@ func (p *Packet) WriteInt(val int32) error {
 	return err
 }
 
-func (p *Packet) ReadIntLE() (int32, error) {
+func (p *Packet) ReadInt32LE() (int32, error) {
 	data := make([]byte, 4)
 
 	_, err := p.b.Read(data)
@@ -181,7 +181,7 @@ func (p *Packet) ReadIntLE() (int32, error) {
 	return int32(binary.LittleEndian.Uint32(data)), err
 }
 
-func (p *Packet) WriteIntLE(val int32) error {
+func (p *Packet) WriteInt32LE(val int32) error {
 	data := make([]byte, 4)
 
 	binary.LittleEndian.PutUint32(data, uint32(val))
@@ -191,7 +191,7 @@ func (p *Packet) WriteIntLE(val int32) error {
 	return err
 }
 
-func (p *Packet) ReadUnsignedInt() (uint32, error) {
+func (p *Packet) ReadUInt32BE() (uint32, error) {
 	data := make([]byte, 4)
 
 	_, err := p.b.Read(data)
@@ -199,7 +199,7 @@ func (p *Packet) ReadUnsignedInt() (uint32, error) {
 	return binary.BigEndian.Uint32(data), err
 }
 
-func (p *Packet) WriteUnsignedInt(val uint32) error {
+func (p *Packet) WriteUInt32BE(val uint32) error {
 	data := make([]byte, 4)
 
 	binary.BigEndian.PutUint32(data, val)
@@ -209,7 +209,7 @@ func (p *Packet) WriteUnsignedInt(val uint32) error {
 	return err
 }
 
-func (p *Packet) ReadUnsignedIntLE() (uint32, error) {
+func (p *Packet) ReadUInt32LE() (uint32, error) {
 	data := make([]byte, 4)
 
 	_, err := p.b.Read(data)
@@ -217,7 +217,7 @@ func (p *Packet) ReadUnsignedIntLE() (uint32, error) {
 	return binary.LittleEndian.Uint32(data), err
 }
 
-func (p *Packet) WriteUnsignedIntLE(val uint32) error {
+func (p *Packet) WriteUInt32LE(val uint32) error {
 	data := make([]byte, 4)
 
 	binary.LittleEndian.PutUint32(data, val)
@@ -227,7 +227,7 @@ func (p *Packet) WriteUnsignedIntLE(val uint32) error {
 	return err
 }
 
-func (p *Packet) ReadLong() (int64, error) {
+func (p *Packet) ReadInt64BE() (int64, error) {
 	data := make([]byte, 8)
 
 	_, err := p.b.Read(data)
@@ -235,7 +235,7 @@ func (p *Packet) ReadLong() (int64, error) {
 	return int64(binary.BigEndian.Uint64(data)), err
 }
 
-func (p *Packet) WriteLong(val int64) error {
+func (p *Packet) WriteInt64BE(val int64) error {
 	data := make([]byte, 8)
 
 	binary.BigEndian.PutUint64(data, uint64(val))
@@ -245,7 +245,7 @@ func (p *Packet) WriteLong(val int64) error {
 	return err
 }
 
-func (p *Packet) ReadLongLE() (int64, error) {
+func (p *Packet) ReadInt64LE() (int64, error) {
 	data := make([]byte, 8)
 
 	_, err := p.b.Read(data)
@@ -253,7 +253,7 @@ func (p *Packet) ReadLongLE() (int64, error) {
 	return int64(binary.LittleEndian.Uint64(data)), err
 }
 
-func (p *Packet) WriteLongLE(val int64) error {
+func (p *Packet) WriteInt64LE(val int64) error {
 	data := make([]byte, 8)
 
 	binary.LittleEndian.PutUint64(data, uint64(val))
@@ -263,7 +263,7 @@ func (p *Packet) WriteLongLE(val int64) error {
 	return err
 }
 
-func (p *Packet) ReadUnsignedLong() (uint64, error) {
+func (p *Packet) ReadUInt64BE() (uint64, error) {
 	data := make([]byte, 8)
 
 	_, err := p.b.Read(data)
@@ -271,7 +271,7 @@ func (p *Packet) ReadUnsignedLong() (uint64, error) {
 	return binary.BigEndian.Uint64(data), err
 }
 
-func (p *Packet) WriteUnsignedLong(val uint64) error {
+func (p *Packet) WriteUint64BE(val uint64) error {
 	data := make([]byte, 8)
 
 	binary.BigEndian.PutUint64(data, val)
@@ -281,7 +281,7 @@ func (p *Packet) WriteUnsignedLong(val uint64) error {
 	return err
 }
 
-func (p *Packet) ReadUnsignedLongLE() (uint64, error) {
+func (p *Packet) ReadUInt64LE() (uint64, error) {
 	data := make([]byte, 8)
 
 	_, err := p.b.Read(data)
@@ -289,7 +289,7 @@ func (p *Packet) ReadUnsignedLongLE() (uint64, error) {
 	return binary.LittleEndian.Uint64(data), err
 }
 
-func (p *Packet) WriteUnsignedLongLE(val uint64) error {
+func (p *Packet) WriteUInt64LE(val uint64) error {
 	data := make([]byte, 8)
 
 	binary.LittleEndian.PutUint64(data, val)
@@ -299,28 +299,28 @@ func (p *Packet) WriteUnsignedLongLE(val uint64) error {
 	return err
 }
 
-func (p *Packet) ReadFloat() (float32, error) {
-	val, err := p.ReadUnsignedInt()
+func (p *Packet) ReadFloat32() (float32, error) {
+	val, err := p.ReadUInt32BE()
 
 	return math.Float32frombits(val), err
 }
 
-func (p *Packet) WriteFloat(val float32) error {
+func (p *Packet) WriteFloat32(val float32) error {
 	res := math.Float32bits(val)
 
-	return p.WriteUnsignedInt(res)
+	return p.WriteUInt32BE(res)
 }
 
-func (p *Packet) ReadDouble() (float64, error) {
-	val, err := p.ReadUnsignedLong()
+func (p *Packet) ReadFloat64() (float64, error) {
+	val, err := p.ReadUInt64BE()
 
 	return math.Float64frombits(val), err
 }
 
-func (p *Packet) WriteDouble(val float64) error {
+func (p *Packet) WriteFloat64(val float64) error {
 	res := math.Float64bits(val)
 
-	return p.WriteUnsignedLong(res)
+	return p.WriteUint64BE(res)
 }
 
 func (p *Packet) ReadString() (string, error) {

@@ -91,7 +91,7 @@ func SendVote(host string, port uint16, options VoteOptions) error {
 	// Vote packet
 	// https://github.com/NuVotifier/NuVotifier/wiki/Technical-QA#protocol-v2
 	{
-		votePacket := NewPacket()
+		packet := NewPacket()
 
 		payload := votePayload{
 			ServiceName: options.ServiceName,
@@ -122,19 +122,19 @@ func SendVote(host string, port uint16, options VoteOptions) error {
 			return err
 		}
 
-		if err = votePacket.WriteUnsignedShort(0x733A); err != nil {
+		if err = packet.WriteUInt16BE(0x733A); err != nil {
 			return err
 		}
 
-		if err = votePacket.WriteUnsignedShort(uint16(len(messageData))); err != nil {
+		if err = packet.WriteUInt16BE(uint16(len(messageData))); err != nil {
 			return err
 		}
 
-		if err = votePacket.WriteBytes(messageData); err != nil {
+		if err = packet.WriteBytes(messageData); err != nil {
 			return err
 		}
 
-		if _, err := votePacket.WriteTo(conn); err != nil {
+		if _, err := packet.WriteTo(conn); err != nil {
 			return err
 		}
 	}

@@ -89,38 +89,38 @@ func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatus
 	// Handshake packet
 	// https://wiki.vg/Server_List_Ping#Handshake
 	{
-		handshakePacket := NewPacket()
+		packet := NewPacket()
 
 		// Packet ID (varint) - 0x00
-		if err = handshakePacket.WriteVarInt(0); err != nil {
+		if err = packet.WriteVarInt(0); err != nil {
 			return nil, err
 		}
 
 		// Protocol version (varint)
-		if err = handshakePacket.WriteVarInt(int32(opts.ProtocolVersion)); err != nil {
+		if err = packet.WriteVarInt(int32(opts.ProtocolVersion)); err != nil {
 			return nil, err
 		}
 
 		// Host (string)
-		if err = handshakePacket.WriteString(host); err != nil {
+		if err = packet.WriteString(host); err != nil {
 			return nil, err
 		}
 
 		// Port (uint16)
-		if err = handshakePacket.WriteUnsignedShort(port); err != nil {
+		if err = packet.WriteUInt16BE(port); err != nil {
 			return nil, err
 		}
 
 		// Next state (varint)
-		if err = handshakePacket.WriteVarInt(1); err != nil {
+		if err = packet.WriteVarInt(1); err != nil {
 			return nil, err
 		}
 
-		if err = handshakePacket.WriteLength(); err != nil {
+		if err = packet.WriteLength(); err != nil {
 			return nil, err
 		}
 
-		if _, err = handshakePacket.WriteTo(conn); err != nil {
+		if _, err = packet.WriteTo(conn); err != nil {
 			return nil, err
 		}
 	}
@@ -128,18 +128,18 @@ func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatus
 	// Request packet
 	// https://wiki.vg/Server_List_Ping#Request
 	{
-		handshakePacket := NewPacket()
+		packet := NewPacket()
 
 		// Packet ID (varint) - 0x00
-		if err = handshakePacket.WriteVarInt(0); err != nil {
+		if err = packet.WriteVarInt(0); err != nil {
 			return nil, err
 		}
 
-		if err = handshakePacket.WriteLength(); err != nil {
+		if err = packet.WriteLength(); err != nil {
 			return nil, err
 		}
 
-		if _, err = handshakePacket.WriteTo(conn); err != nil {
+		if _, err = packet.WriteTo(conn); err != nil {
 			return nil, err
 		}
 	}

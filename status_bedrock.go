@@ -79,29 +79,29 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 	// Unconnected ping packet
 	// https://wiki.vg/Raknet_Protocol#Unconnected_Ping
 	{
-		pingPacket := NewPacket()
+		packet := NewPacket()
 
 		// Packet ID (byte) - 0x01
-		if err = pingPacket.WriteByte(0x01); err != nil {
+		if err = packet.WriteByte(0x01); err != nil {
 			return nil, err
 		}
 
 		// Time (int64)
-		if err = pingPacket.WriteLong(time.Now().UnixNano() / int64(time.Millisecond)); err != nil {
+		if err = packet.WriteInt64BE(time.Now().UnixNano() / int64(time.Millisecond)); err != nil {
 			return nil, err
 		}
 
 		// Magic (bytes)
-		if err = pingPacket.WriteBytes(bedrockMagic); err != nil {
+		if err = packet.WriteBytes(bedrockMagic); err != nil {
 			return nil, err
 		}
 
 		// Client GUID (int64)
-		if err = pingPacket.WriteLong(opts.ClientGUID); err != nil {
+		if err = packet.WriteInt64BE(opts.ClientGUID); err != nil {
 			return nil, err
 		}
 
-		if _, err = pingPacket.WriteTo(conn); err != nil {
+		if _, err = packet.WriteTo(conn); err != nil {
 			return nil, err
 		}
 	}

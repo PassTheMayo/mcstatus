@@ -63,34 +63,34 @@ func (r *RCON) Login(password string) error {
 	// Login request packet
 	// https://wiki.vg/RCON#3:_Login
 	{
-		loginPacket := NewPacket()
+		packet := NewPacket()
 
 		// Length (int32)
-		if err := loginPacket.WriteIntLE(int32(10 + len(password))); err != nil {
+		if err := packet.WriteInt32LE(int32(10 + len(password))); err != nil {
 			return err
 		}
 
 		// Request ID (int32) - 0
-		if err := loginPacket.WriteIntLE(0); err != nil {
+		if err := packet.WriteInt32LE(0); err != nil {
 			return err
 		}
 
 		// Type (int32) - 3
-		if err := loginPacket.WriteIntLE(3); err != nil {
+		if err := packet.WriteInt32LE(3); err != nil {
 			return err
 		}
 
 		// Payload (null-terminated string) - 3
-		if err := loginPacket.WriteBytes(append([]byte(password), 0x00)); err != nil {
+		if err := packet.WriteBytes(append([]byte(password), 0x00)); err != nil {
 			return err
 		}
 
 		// Padding (null byte) - 0x00
-		if err := loginPacket.WriteByte(0x00); err != nil {
+		if err := packet.WriteByte(0x00); err != nil {
 			return err
 		}
 
-		n, err := loginPacket.WriteTo(*r.Conn)
+		n, err := packet.WriteTo(*r.Conn)
 
 		if err != nil {
 			return err
@@ -216,34 +216,34 @@ func (r *RCON) Run(command string) error {
 	// Command packet
 	// https://wiki.vg/RCON#2:_Command
 	{
-		commandPacket := NewPacket()
+		packet := NewPacket()
 
 		// Length (int32)
-		if err := commandPacket.WriteIntLE(int32(10 + len(command))); err != nil {
+		if err := packet.WriteInt32LE(int32(10 + len(command))); err != nil {
 			return err
 		}
 
 		// Request ID (int32)
-		if err := commandPacket.WriteIntLE(int32(r.requestID)); err != nil {
+		if err := packet.WriteInt32LE(int32(r.requestID)); err != nil {
 			return err
 		}
 
 		// Type (int32) - 2
-		if err := commandPacket.WriteIntLE(2); err != nil {
+		if err := packet.WriteInt32LE(2); err != nil {
 			return err
 		}
 
 		// Payload (null-terminated string)
-		if err := commandPacket.WriteBytes(append([]byte(command), 0x00)); err != nil {
+		if err := packet.WriteBytes(append([]byte(command), 0x00)); err != nil {
 			return err
 		}
 
 		// Padding (null byte) - 0x00
-		if err := commandPacket.WriteByte(0x00); err != nil {
+		if err := packet.WriteByte(0x00); err != nil {
 			return err
 		}
 
-		n, err := commandPacket.WriteTo(*r.Conn)
+		n, err := packet.WriteTo(*r.Conn)
 
 		if err != nil {
 			return err

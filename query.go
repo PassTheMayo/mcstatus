@@ -58,24 +58,24 @@ func BasicQuery(host string, port uint16, options ...QueryOptions) (*BasicQueryR
 	// Handshake request packet
 	// https://wiki.vg/Query#Request
 	{
-		handshakePacket := NewPacket()
+		packet := NewPacket()
 
 		// Magic (uint16) - 0xFEFD
-		if err = handshakePacket.WriteBytes(magic); err != nil {
+		if err = packet.WriteBytes(magic); err != nil {
 			return nil, err
 		}
 
 		// Type (byte) - 0x09
-		if err = handshakePacket.WriteByte(0x09); err != nil {
+		if err = packet.WriteByte(0x09); err != nil {
 			return nil, err
 		}
 
 		// Session ID (int32)
-		if err = handshakePacket.WriteInt(opts.SessionID & 0x0F0F0F0F); err != nil {
+		if err = packet.WriteInt32BE(opts.SessionID & 0x0F0F0F0F); err != nil {
 			return nil, err
 		}
 
-		n, err := handshakePacket.WriteTo(conn)
+		n, err := packet.WriteTo(conn)
 
 		if err != nil {
 			return nil, err
@@ -166,29 +166,29 @@ func BasicQuery(host string, port uint16, options ...QueryOptions) (*BasicQueryR
 	// Basic stat request packet
 	// https://wiki.vg/Query#Request_2
 	{
-		requestPacket := NewPacket()
+		packet := NewPacket()
 
 		// Magic (uint16) - 0xFEFD
-		if err = requestPacket.WriteBytes(magic); err != nil {
+		if err = packet.WriteBytes(magic); err != nil {
 			return nil, err
 		}
 
 		// Type (byte) - 0x00
-		if err = requestPacket.WriteByte(0x00); err != nil {
+		if err = packet.WriteByte(0x00); err != nil {
 			return nil, err
 		}
 
 		// Session ID (int32)
-		if err = requestPacket.WriteInt(opts.SessionID & 0x0F0F0F0F); err != nil {
+		if err = packet.WriteInt32BE(opts.SessionID & 0x0F0F0F0F); err != nil {
 			return nil, err
 		}
 
 		// Challenge Token (int32)
-		if err = requestPacket.WriteInt(challengeToken); err != nil {
+		if err = packet.WriteInt32BE(challengeToken); err != nil {
 			return nil, err
 		}
 
-		n, err := requestPacket.WriteTo(conn)
+		n, err := packet.WriteTo(conn)
 
 		if err != nil {
 			return nil, err
@@ -465,7 +465,7 @@ func FullQuery(host string, port uint16, options ...QueryOptions) (*FullQueryRes
 		}
 
 		// Session ID (int32)
-		if err = handshakePacket.WriteInt(opts.SessionID & 0x0F0F0F0F); err != nil {
+		if err = handshakePacket.WriteInt32BE(opts.SessionID & 0x0F0F0F0F); err != nil {
 			return nil, err
 		}
 
@@ -573,12 +573,12 @@ func FullQuery(host string, port uint16, options ...QueryOptions) (*FullQueryRes
 		}
 
 		// Session ID (int32)
-		if err = requestPacket.WriteInt(opts.SessionID & 0x0F0F0F0F); err != nil {
+		if err = requestPacket.WriteInt32BE(opts.SessionID & 0x0F0F0F0F); err != nil {
 			return nil, err
 		}
 
 		// Challenge Token (int32)
-		if err = requestPacket.WriteInt(challengeToken); err != nil {
+		if err = requestPacket.WriteInt32BE(challengeToken); err != nil {
 			return nil, err
 		}
 
