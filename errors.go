@@ -17,6 +17,8 @@ var (
 	ErrAlreadyLoggedIn = errors.New("RCON client is already logged in after a second login attempt was made")
 	// ErrInvalidPassword means the password used in the RCON loggin was incorrect
 	ErrInvalidPassword = errors.New("incorrect RCON password")
-	// ErrNotLoggedIn
+	// ErrNotLoggedIn means the client attempted to execute a command before a login was successful
 	ErrNotLoggedIn = errors.New("RCON client attempted to send message before successful login")
+	// ErrUnknownVersion means the server returned a Votifier version that is unsupported
+	ErrUnknownVersion = errors.New("unsupported server Votifier version")
 )

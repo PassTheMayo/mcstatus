@@ -104,3 +104,24 @@ func main() {
     }
 }
 ```
+
+## Send Vote
+
+```go
+import "github.com/PassTheMayo/mcstatus"
+
+func main() {
+    err := mcstatus.SendVote("127.0.0.1", 8192, mcstatus.VoteOptions{
+		ServiceName: "my-service",
+		Username:    "PassTheMayo",
+		Token:       "abc123", // server's Votifier token
+		UUID:        "",       // recommended but not required, UUID with dashes
+		Timestamp:   time.Now(),
+		Timeout:     time.Second * 5,
+	})
+
+    if err != nil {
+        panic(err)
+    }
+}
+```
