@@ -1,229 +1,335 @@
 package mcstatus
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
-	"io"
-	"regexp"
+	"reflect"
+	"strings"
 )
 
 var (
-	stripFormattingRegExp = regexp.MustCompile("\u00A7[0-9a-gk-or]")
-	colorLookupTable      = map[string]string{
-		"black":        "0",
-		"dark_blue":    "1",
-		"dark_green":   "2",
-		"dark_aqua":    "3",
-		"dark_red":     "4",
-		"dark_purple":  "5",
-		"gold":         "6",
-		"gray":         "7",
-		"dark_gray":    "8",
-		"blue":         "9",
-		"green":        "a",
-		"aqua":         "b",
-		"red":          "c",
-		"light_purple": "d",
-		"yellow":       "e",
-		"white":        "f",
-		"0":            "0",
-		"1":            "1",
-		"2":            "2",
-		"3":            "3",
-		"4":            "4",
-		"5":            "5",
-		"6":            "6",
-		"7":            "7",
-		"8":            "8",
-		"9":            "9",
-		"a":            "a",
-		"b":            "b",
-		"c":            "c",
-		"d":            "d",
-		"e":            "e",
-		"f":            "f",
+	formattingColorCodeLookupTable = map[rune]ColorName{
+		'0': "black",
+		'1': "dark_blue",
+		'2': "dark_green",
+		'3': "dark_aqua",
+		'4': "dark_red",
+		'5': "dark_purple",
+		'6': "gold",
+		'7': "gray",
+		'8': "dark_gray",
+		'9': "blue",
+		'a': "green",
+		'b': "aqua",
+		'c': "red",
+		'd': "light_purple",
+		'e': "yellow",
+		'f': "white",
+		'g': "minecoin_gold",
 	}
-	htmlColorLookupTable = map[rune]string{
-		'0': "#000000",
-		'1': "#0000aa",
-		'2': "#00aa00",
-		'3': "#00aaaa",
-		'4': "#aa0000",
-		'5': "#aa00aa",
-		'6': "#ffaa00",
-		'7': "#aaaaaa",
-		'8': "#555555",
-		'9': "#5555ff",
-		'a': "#55ff55",
-		'b': "#55ffff",
-		'c': "#ff5555",
-		'd': "#ff55ff",
-		'e': "#ffff55",
-		'f': "#ffffff",
+	colorNameLookupTable = map[ColorName]rune{
+		"black":         '0',
+		"dark_blue":     '1',
+		"dark_green":    '2',
+		"dark_aqua":     '3',
+		"dark_red":      '4',
+		"dark_purple":   '5',
+		"gold":          '6',
+		"gray":          '7',
+		"dark_gray":     '8',
+		"blue":          '9',
+		"green":         'a',
+		"aqua":          'b',
+		"red":           'c',
+		"light_purple":  'd',
+		"yellow":        'e',
+		"white":         'f',
+		"minecoin_gold": 'g',
+	}
+	htmlColorLookupTable = map[ColorName]string{
+		"black":         "#000000",
+		"dark_blue":     "#0000aa",
+		"dark_green":    "#00aa00",
+		"dark_aqua":     "#00aaaa",
+		"dark_red":      "#aa0000",
+		"dark_purple":   "#aa00aa",
+		"gold":          "#ffaa00",
+		"gray":          "#aaaaaa",
+		"dark_gray":     "#555555",
+		"blue":          "#5555ff",
+		"green":         "#55ff55",
+		"aqua":          "#55ffff",
+		"red":           "#ff5555",
+		"light_purple":  "#ff55ff",
+		"yellow":        "#ffff55",
+		"white":         "#ffffff",
+		"minecoin_gold": "#ddd605",
 	}
 )
 
+type ColorName string
+
+const (
+	ColorNameBlack        ColorName = "black"
+	ColorNameDarkBlue     ColorName = "dark_blue"
+	ColorNameDarkGreen    ColorName = "dark_green"
+	ColorNameDarkAqua     ColorName = "dark_aqua"
+	ColorNameDarkRed      ColorName = "dark_red"
+	ColorNameDarkPurple   ColorName = "dark_purple"
+	ColorNameGold         ColorName = "gold"
+	ColorNameGray         ColorName = "gray"
+	ColorNameDarkGray     ColorName = "dark_gray"
+	ColorNameBlue         ColorName = "blue"
+	ColorNameGreen        ColorName = "green"
+	ColorNameAqua         ColorName = "aqua"
+	ColorNameRed          ColorName = "red"
+	ColorNameLightPurple  ColorName = "light_purple"
+	ColorNameYellow       ColorName = "yellow"
+	ColorNameWhite        ColorName = "white"
+	ColorNameMinecoinGold ColorName = "minecoin_gold"
+)
+
+// FormatItem is a formatting item parsed from the description for easy use
+type FormatItem struct {
+	Text          string    `json:"text"`
+	Color         ColorName `json:"color"`
+	Obfuscated    bool      `json:"obfuscated"`
+	Bold          bool      `json:"bold"`
+	Strikethrough bool      `json:"strikethrough"`
+	Underline     bool      `json:"underline"`
+	Italic        bool      `json:"italic"`
+}
+
 // Description contains helper functions for reading and writing the description
 type Description struct {
-	raw string
+	Tree []FormatItem `json:"tree"`
+}
+
+// NewDescription parses the description as a string or Chat object into a tree
+func NewDescription(desc interface{}) (*Description, error) {
+	if v, ok := desc.(string); ok {
+		tree, err := parseString(v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return &Description{
+			Tree: tree,
+		}, nil
+	}
+
+	if m, ok := desc.(map[string]interface{}); ok {
+		str := parseChatObject(m)
+
+		tree, err := parseString(str)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return &Description{
+			Tree: tree,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("unknown description type: %s", reflect.TypeOf(desc))
 }
 
 // String returns the description with formatting
 func (d Description) String() string {
-	return d.raw
+	result := ""
+
+	for _, v := range d.Tree {
+		if v.Color != ColorNameWhite {
+			colorCode, ok := colorNameLookupTable[v.Color]
+
+			if ok {
+				result += "\u00A7" + string(colorCode)
+			}
+		}
+
+		if v.Obfuscated {
+			result += "\u00A7k"
+		}
+
+		if v.Bold {
+			result += "\u00A7l"
+		}
+
+		if v.Strikethrough {
+			result += "\u00A7m"
+		}
+
+		if v.Underline {
+			result += "\u00A7n"
+		}
+
+		if v.Italic {
+			result += "\u00A7o"
+		}
+
+		result += v.Text
+	}
+
+	return result
 }
 
 // Raw returns the raw description with formatting
 func (d Description) Raw() string {
-	return d.raw
+	return d.String()
 }
 
 // Clean returns the description with no formatting
 func (d Description) Clean() string {
-	return stripFormattingRegExp.ReplaceAllString(d.raw, "")
+	result := ""
+
+	for _, v := range d.Tree {
+		result += v.Text
+	}
+
+	return result
 }
 
 // HTML returns the description with HTML formatting
-func (d Description) HTML() (string, error) {
+func (d Description) HTML() string {
 	result := "<span>"
-	buf := bytes.NewBufferString(d.Raw())
 
-	tagsOpen := 1
-	bold := false
-	italics := false
-	underline := false
-	strikethrough := false
-	color := "r"
+	for _, v := range d.Tree {
+		classes := make([]string, 0)
+		styles := make(map[string]string)
 
-	for {
-		c, n, err := buf.ReadRune()
+		color, ok := htmlColorLookupTable[v.Color]
 
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				break
-			}
-
-			return "", err
+		if ok {
+			styles["color"] = color
 		}
 
-		if n < 1 {
-			break
+		if v.Obfuscated {
+			classes = append(classes, "minecraft-format-obfuscated")
 		}
 
-		if c == '\u00A7' {
-			charCode, _, err := buf.ReadRune()
-
-			if err != nil {
-				return "", err
-			}
-
-			if v, ok := htmlColorLookupTable[charCode]; ok {
-				if color == v {
-					continue
-				}
-
-				color = v
-
-				result += fmt.Sprintf("</span><span style=\"color: %s;\">", v)
-			}
-
-			if charCode == 'l' && !bold {
-				result += "<span style=\"font-weight: bold;\">"
-				bold = true
-				tagsOpen++
-			}
-
-			if charCode == 'm' && !strikethrough {
-				result += "<span style=\"text-decoration: line-through;\">"
-				strikethrough = true
-				tagsOpen++
-			}
-
-			if charCode == 'n' && !underline {
-				result += "<span style=\"text-decoration: underline;\">"
-				underline = true
-				tagsOpen++
-			}
-
-			if charCode == 'o' && !italics {
-				result += "<span style=\"font-style: italic;\">"
-				italics = true
-				tagsOpen++
-			}
-
-			if charCode == 'r' {
-				if bold {
-					bold = false
-
-					result += "</span>"
-				}
-
-				if strikethrough {
-					strikethrough = false
-
-					result += "</span>"
-				}
-
-				if underline {
-					underline = false
-
-					result += "</span>"
-				}
-
-				if italics {
-					italics = false
-
-					result += "</span>"
-				}
-			}
-		} else {
-			result += string(c)
+		if v.Bold {
+			styles["font-weight"] = "bold"
 		}
+
+		if v.Strikethrough {
+			_, ok = styles["text-decoration"]
+
+			if ok {
+				styles["text-decoration"] += " line-through"
+			} else {
+				styles["text-decoration"] = "line-through"
+			}
+		}
+
+		if v.Underline {
+			_, ok = styles["text-decoration"]
+
+			if ok {
+				styles["text-decoration"] += " underline"
+			} else {
+				styles["text-decoration"] = "underline"
+			}
+		}
+
+		if v.Italic {
+			styles["font-style"] = "italic"
+		}
+
+		result += "<span"
+
+		if len(classes) > 0 {
+			result += " class=\""
+
+			for _, v := range classes {
+				result += v
+			}
+
+			result += "\""
+		}
+
+		if len(styles) > 0 {
+			result += " style=\""
+
+			keys := make([]string, 0, len(styles))
+
+			for k := range styles {
+				keys = append(keys, k)
+			}
+
+			for i, l := 0, len(keys); i < l; i++ {
+				key := keys[i]
+				value := styles[key]
+
+				result += fmt.Sprintf("%s: %s;", key, value)
+
+				if i+1 != l {
+					result += " "
+				}
+			}
+
+			result += "\""
+		}
+
+		result += fmt.Sprintf(">%s</span>", v.Text)
 	}
 
-	for i := 0; i < tagsOpen; i++ {
-		result += "</span>"
-	}
-
-	return result, nil
+	return result + "</span>"
 }
 
 func parseChatObject(m map[string]interface{}) string {
 	result := ""
 
-	if v, ok := m["bold"].(string); ok && v == "true" {
-		result += "\u00A7l"
-	}
+	color, ok := m["color"].(string)
 
-	if v, ok := m["italic"].(string); ok && v == "true" {
-		result += "\u00A7l"
-	}
+	if ok {
+		code, ok := colorNameLookupTable[ColorName(color)]
 
-	if v, ok := m["underlined"].(string); ok && v == "true" {
-		result += "\u00A7l"
-	}
-
-	if v, ok := m["strikethrough"].(string); ok && v == "true" {
-		result += "\u00A7l"
-	}
-
-	if v, ok := m["obfuscated"].(string); ok && v == "true" {
-		result += "\u00A7l"
-	}
-
-	if v, ok := m["color"].(string); ok {
-		if c, ok := colorLookupTable[v]; ok {
-			result += "\u00A7" + c
+		if ok {
+			result += "\u00A7" + string(code)
 		}
 	}
 
-	if v, ok := m["text"].(string); ok {
-		result += v
+	bold, ok := m["bold"].(string)
+
+	if ok && bold == "true" {
+		result += "\u00A7l"
 	}
 
-	if e, ok := m["extra"].([]map[string]interface{}); ok {
-		for _, v := range e {
+	italic, ok := m["italic"].(string)
+
+	if ok && italic == "true" {
+		result += "\u00A7o"
+	}
+
+	underline, ok := m["underlined"].(string)
+
+	if ok && underline == "true" {
+		result += "\u00A7n"
+	}
+
+	strikethrough, ok := m["strikethrough"].(string)
+
+	if ok && strikethrough == "true" {
+		result += "\u00A7m"
+	}
+
+	obfuscated, ok := m["obfuscated"].(string)
+
+	if ok && obfuscated == "true" {
+		result += "\u00A7k"
+	}
+
+	text, ok := m["text"].(string)
+
+	if ok {
+		result += text
+	}
+
+	extra, ok := m["extra"].([]map[string]interface{})
+
+	if ok {
+		for _, v := range extra {
 			result += parseChatObject(v)
 		}
 	}
@@ -231,14 +337,129 @@ func parseChatObject(m map[string]interface{}) string {
 	return result
 }
 
-func parseDescription(raw interface{}) Description {
-	if v, ok := raw.(string); ok {
-		return Description{v}
+func parseString(s string) ([]FormatItem, error) {
+	tree := make([]FormatItem, 0)
+
+	item := FormatItem{
+		Text:  "",
+		Color: ColorNameWhite,
 	}
 
-	if m, ok := raw.(map[string]interface{}); ok {
-		return Description{parseChatObject(m)}
+	r := strings.NewReader(s)
+
+	for r.Len() > 0 {
+		char, n, err := r.ReadRune()
+
+		if err != nil {
+			return nil, err
+		}
+
+		if n < 1 {
+			break
+		}
+
+		if char != '\u00A7' {
+			item.Text += string(char)
+
+			continue
+		}
+
+		code, n, err := r.ReadRune()
+
+		if err != nil {
+			return nil, err
+		}
+
+		if n < 1 {
+			break
+		}
+
+		// Color code
+		{
+			name, ok := formattingColorCodeLookupTable[code]
+
+			if ok {
+				if item.Obfuscated || item.Bold || item.Strikethrough || item.Underline || item.Italic || name != item.Color {
+					if len(item.Text) > 0 {
+						tree = append(tree, item)
+					}
+
+					item = FormatItem{
+						Text:  "",
+						Color: name,
+					}
+				} else {
+					item.Color = name
+				}
+
+				continue
+			}
+		}
+
+		// Formatting code
+		{
+			switch code {
+			case 'k':
+				{
+					if len(item.Text) > 0 {
+						tree = append(tree, item)
+					}
+
+					item.Text = ""
+					item.Obfuscated = true
+				}
+			case 'l':
+				{
+					if len(item.Text) > 0 {
+						tree = append(tree, item)
+					}
+
+					item.Text = ""
+					item.Bold = true
+				}
+			case 'm':
+				{
+					if len(item.Text) > 0 {
+						tree = append(tree, item)
+					}
+
+					item.Text = ""
+					item.Strikethrough = true
+				}
+			case 'n':
+				{
+					if len(item.Text) > 0 {
+						tree = append(tree, item)
+					}
+
+					item.Text = ""
+					item.Underline = true
+				}
+			case 'o':
+				{
+					if len(item.Text) > 0 {
+						tree = append(tree, item)
+					}
+
+					item.Text = ""
+					item.Italic = true
+				}
+			case 'r':
+				{
+					if len(item.Text) > 0 {
+						tree = append(tree, item)
+					}
+
+					item = FormatItem{
+						Text:  "",
+						Color: ColorNameWhite,
+					}
+				}
+			}
+		}
 	}
 
-	return Description{}
+	tree = append(tree, item)
+
+	return tree, nil
 }

@@ -258,11 +258,23 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 		return nil, err
 	}
 
+	descriptionLine1, err := NewDescription(splitResponse[1])
+
+	if err != nil {
+		return nil, err
+	}
+
+	descriptionLine2, err := NewDescription(splitResponse[7])
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &BedrockStatusResponse{
 		ServerGUID:      serverGUID,
 		Edition:         splitResponse[0],
-		MOTDLine1:       parseDescription(splitResponse[1]),
-		MOTDLine2:       parseDescription(splitResponse[7]),
+		MOTDLine1:       *descriptionLine1,
+		MOTDLine2:       *descriptionLine2,
 		ProtocolVersion: protocolVersion,
 		Version:         splitResponse[3],
 		OnlinePlayers:   onlinePlayers,

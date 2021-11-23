@@ -422,8 +422,14 @@ func BasicQuery(host string, port uint16, options ...QueryOptions) (*BasicQueryR
 		}
 	}
 
+	description, err := NewDescription(motd)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &BasicQueryResponse{
-		MOTD:          parseDescription(motd),
+		MOTD:          *description,
 		GameType:      gameType,
 		Map:           mapName,
 		OnlinePlayers: onlinePlayers,

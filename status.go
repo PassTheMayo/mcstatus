@@ -181,10 +181,18 @@ func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatus
 				return nil, err
 			}
 
+			fmt.Printf("%+v\n", result.Description)
+
+			description, err := NewDescription(result.Description)
+
+			if err != nil {
+				return nil, err
+			}
+
 			return &JavaStatusResponse{
 				Version:     result.Version,
 				Players:     result.Players,
-				Description: parseDescription(result.Description),
+				Description: *description,
 				Favicon:     parseFavicon(result.Favicon),
 				SRVResult:   srvResult,
 			}, nil
