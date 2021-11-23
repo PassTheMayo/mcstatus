@@ -213,23 +213,19 @@ func (d Description) HTML() string {
 		}
 
 		if v.Strikethrough {
-			_, ok = styles["text-decoration"]
-
-			if ok {
-				styles["text-decoration"] += " line-through"
-			} else {
-				styles["text-decoration"] = "line-through"
+			if _, ok = styles["text-decoration"]; ok {
+				styles["text-decoration"] += " "
 			}
+
+			styles["text-decoration"] += "line-through"
 		}
 
 		if v.Underline {
-			_, ok = styles["text-decoration"]
-
-			if ok {
-				styles["text-decoration"] += " underline"
-			} else {
-				styles["text-decoration"] = "underline"
+			if _, ok = styles["text-decoration"]; ok {
+				styles["text-decoration"] += " "
 			}
+
+			styles["text-decoration"] += "underline"
 		}
 
 		if v.Italic {
