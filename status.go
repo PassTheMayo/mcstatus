@@ -1,8 +1,12 @@
 package mcstatus
 
 import (
+	"bufio"
+	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"time"
 )
@@ -84,43 +88,49 @@ func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatus
 
 	defer conn.Close()
 
-	conn.SetDeadline(time.Now().Add(opts.Timeout))
+	r := bufio.NewReader(conn)
+
+	if err = conn.SetDeadline(time.Now().Add(opts.Timeout)); err != nil {
+		return nil, err
+	}
 
 	// Handshake packet
 	// https://wiki.vg/Server_List_Ping#Handshake
 	{
-		packet := NewPacket()
+		buf := &bytes.Buffer{}
 
-		// Packet ID (varint) - 0x00
-		if err = packet.WriteVarInt(0); err != nil {
+		// Packet ID - varint
+		if _, err := writeVarInt(0x00, buf); err != nil {
 			return nil, err
 		}
 
-		// Protocol version (varint)
-		if err = packet.WriteVarInt(int32(opts.ProtocolVersion)); err != nil {
+		// Protocol version - varint
+		if _, err = writeVarInt(int32(opts.ProtocolVersion), buf); err != nil {
 			return nil, err
 		}
 
-		// Host (string)
-		if err = packet.WriteString(host); err != nil {
+		// Host - string
+		if err := writeString(host, buf); err != nil {
 			return nil, err
 		}
 
-		// Port (uint16)
-		if err = packet.WriteUInt16BE(port); err != nil {
+		// Port - uint16
+		if err := binary.Write(buf, binary.BigEndian, port); err != nil {
 			return nil, err
 		}
 
-		// Next state (varint)
-		if err = packet.WriteVarInt(1); err != nil {
+		// Next state - varint
+		if _, err := writeVarInt(1, buf); err != nil {
 			return nil, err
 		}
 
-		if err = packet.WriteLength(); err != nil {
+		finalPacket, err := writePacketLength(buf)
+
+		if err != nil {
 			return nil, err
 		}
 
-		if _, err = packet.WriteTo(conn); err != nil {
+		if _, err := io.Copy(conn, finalPacket); err != nil {
 			return nil, err
 		}
 	}
@@ -128,18 +138,20 @@ func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatus
 	// Request packet
 	// https://wiki.vg/Server_List_Ping#Request
 	{
-		packet := NewPacket()
+		buf := &bytes.Buffer{}
 
-		// Packet ID (varint) - 0x00
-		if err = packet.WriteVarInt(0); err != nil {
+		// Packet ID - varint
+		if _, err := writeVarInt(0, buf); err != nil {
 			return nil, err
 		}
 
-		if err = packet.WriteLength(); err != nil {
+		finalPacket, err := writePacketLength(buf)
+
+		if err != nil {
 			return nil, err
 		}
 
-		if _, err = packet.WriteTo(conn); err != nil {
+		if _, err := io.Copy(conn, finalPacket); err != nil {
 			return nil, err
 		}
 	}
@@ -149,14 +161,14 @@ func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatus
 	{
 		// Packet length - varint
 		{
-			if _, _, err := readVarInt(conn); err != nil {
+			if _, _, err := readVarInt(r); err != nil {
 				return nil, err
 			}
 		}
 
 		// Packet type - varint
 		{
-			packetType, _, err := readVarInt(conn)
+			packetType, _, err := readVarInt(r)
 
 			if err != nil {
 				return nil, err
@@ -169,7 +181,7 @@ func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatus
 
 		// Data - string
 		{
-			data, err := readString(conn)
+			data, err := readString(r)
 
 			if err != nil {
 				return nil, err
@@ -177,11 +189,11 @@ func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatus
 
 			result := &rawStatus{}
 
-			if err = json.Unmarshal([]byte(data), result); err != nil {
+			if err = json.Unmarshal(data, result); err != nil {
 				return nil, err
 			}
 
-			description, err := NewDescription(result.Description)
+			description, err := parseDescription(result.Description)
 
 			if err != nil {
 				return nil, err

@@ -1,9 +1,12 @@
 package mcstatus
 
 import (
+	"bufio"
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -50,39 +53,27 @@ func SendVote(host string, port uint16, options VoteOptions) error {
 
 	defer conn.Close()
 
-	conn.SetDeadline(time.Now().Add(options.Timeout))
+	r := bufio.NewReader(conn)
+
+	if err = conn.SetDeadline(time.Now().Add(options.Timeout)); err != nil {
+		return err
+	}
 
 	var challenge string
 
 	// Handshake packet
 	// https://github.com/NuVotifier/NuVotifier/wiki/Technical-QA#handshake
 	{
-		data := make([]byte, 0)
+		data, err := r.ReadBytes('\n')
 
-		for {
-			byteData := make([]byte, 1)
-
-			n, err := conn.Read(byteData)
-
-			if err != nil {
-				return err
-			}
-
-			if n < 1 {
-				return io.EOF
-			}
-
-			if byteData[0] == '\n' {
-				break
-			}
-
-			data = append(data, byteData...)
+		if err != nil {
+			return err
 		}
 
-		split := strings.Split(string(data), " ")
+		split := strings.Split(string(data[:len(data)-1]), " ")
 
 		if split[1] != "2" {
-			return ErrUnknownVersion
+			return fmt.Errorf("unknown server Votifier version: %s", split[1])
 		}
 
 		challenge = split[2]
@@ -91,7 +82,7 @@ func SendVote(host string, port uint16, options VoteOptions) error {
 	// Vote packet
 	// https://github.com/NuVotifier/NuVotifier/wiki/Technical-QA#protocol-v2
 	{
-		packet := NewPacket()
+		buf := &bytes.Buffer{}
 
 		payload := votePayload{
 			ServiceName: options.ServiceName,
@@ -122,19 +113,19 @@ func SendVote(host string, port uint16, options VoteOptions) error {
 			return err
 		}
 
-		if err = packet.WriteUInt16BE(0x733A); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, uint16(0x733A)); err != nil {
 			return err
 		}
 
-		if err = packet.WriteUInt16BE(uint16(len(messageData))); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, uint16(len(messageData))); err != nil {
 			return err
 		}
 
-		if err = packet.WriteBytes(messageData); err != nil {
+		if _, err := buf.Write(messageData); err != nil {
 			return err
 		}
 
-		if _, err := packet.WriteTo(conn); err != nil {
+		if _, err := io.Copy(conn, buf); err != nil {
 			return err
 		}
 	}
@@ -142,31 +133,15 @@ func SendVote(host string, port uint16, options VoteOptions) error {
 	// Response packet
 	// https://github.com/NuVotifier/NuVotifier/wiki/Technical-QA#protocol-v2
 	{
-		data := make([]byte, 0)
+		data, err := r.ReadBytes('\n')
 
-		for {
-			byteData := make([]byte, 1)
-
-			n, err := conn.Read(byteData)
-
-			if err != nil {
-				return err
-			}
-
-			if n < 1 {
-				return io.EOF
-			}
-
-			if byteData[0] == '\n' {
-				break
-			}
-
-			data = append(data, byteData...)
+		if err != nil {
+			return err
 		}
 
 		response := voteResponse{}
 
-		if err = json.Unmarshal(data, &response); err != nil {
+		if err = json.Unmarshal(data[:len(data)-1], &response); err != nil {
 			return err
 		}
 

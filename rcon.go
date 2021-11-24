@@ -2,6 +2,7 @@ package mcstatus
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -16,11 +17,12 @@ var (
 )
 
 type RCON struct {
-	Conn        *net.Conn
+	conn        *net.Conn
 	r           *bufio.Reader
 	Messages    chan string
+	runTrigger  chan bool
 	authSuccess bool
-	requestID   int64
+	requestID   int32
 }
 
 type RCONOptions struct {
@@ -30,9 +32,10 @@ type RCONOptions struct {
 // NewRCON creates a new RCON client from the options parameter
 func NewRCON() *RCON {
 	return &RCON{
-		Conn:        nil,
+		conn:        nil,
 		r:           nil,
 		Messages:    make(chan string),
+		runTrigger:  make(chan bool),
 		authSuccess: false,
 		requestID:   0,
 	}
@@ -43,16 +46,22 @@ func (r *RCON) Dial(host string, port uint16, options ...RCONOptions) error {
 
 	conn, err := net.Dial("tcp4", fmt.Sprintf("%s:%d", host, port))
 
-	conn.SetDeadline(time.Now().Add(opts.Timeout))
+	if err != nil {
+		return err
+	}
 
-	r.Conn = &conn
+	if err = conn.SetDeadline(time.Now().Add(opts.Timeout)); err != nil {
+		return err
+	}
+
+	r.conn = &conn
 	r.r = bufio.NewReader(conn)
 
-	return err
+	return nil
 }
 
 func (r *RCON) Login(password string) error {
-	if r.Conn == nil {
+	if r.conn == nil {
 		return ErrNotConnected
 	}
 
@@ -63,85 +72,57 @@ func (r *RCON) Login(password string) error {
 	// Login request packet
 	// https://wiki.vg/RCON#3:_Login
 	{
-		packet := NewPacket()
+		buf := &bytes.Buffer{}
 
-		// Length (int32)
-		if err := packet.WriteInt32LE(int32(10 + len(password))); err != nil {
+		// Length - int32
+		if err := binary.Write(buf, binary.LittleEndian, int32(10+len(password))); err != nil {
 			return err
 		}
 
-		// Request ID (int32) - 0
-		if err := packet.WriteInt32LE(0); err != nil {
+		// Request ID - int32
+		if err := binary.Write(buf, binary.LittleEndian, int32(0)); err != nil {
 			return err
 		}
 
-		// Type (int32) - 3
-		if err := packet.WriteInt32LE(3); err != nil {
+		// Type - int32
+		if err := binary.Write(buf, binary.LittleEndian, int32(3)); err != nil {
 			return err
 		}
 
-		// Payload (null-terminated string) - 3
-		if err := packet.WriteBytes(append([]byte(password), 0x00)); err != nil {
+		// Payload - null-terminated string
+		if _, err := buf.Write(append([]byte(password), 0x00)); err != nil {
 			return err
 		}
 
-		// Padding (null byte) - 0x00
-		if err := packet.WriteByte(0x00); err != nil {
+		// Padding - byte
+		if err := buf.WriteByte(0x00); err != nil {
 			return err
 		}
 
-		n, err := packet.WriteTo(*r.Conn)
-
-		if err != nil {
+		if _, err := io.Copy(*r.conn, buf); err != nil {
 			return err
-		}
-
-		if n != int64(14+len(password)) {
-			return ErrUnexpectedResponse
 		}
 	}
 
 	// Login response packet
 	// https://wiki.vg/RCON#3:_Login
 	{
-		var packetLength uint32
+		var packetLength int32
 
 		// Length - int32
 		{
-			data := make([]byte, 4)
-
-			n, err := (*r.r).Read(data)
-
-			if err != nil {
+			if err := binary.Read(r.r, binary.LittleEndian, &packetLength); err != nil {
 				return err
-			}
-
-			if n < 4 {
-				return io.EOF
-			}
-
-			packetLength = binary.LittleEndian.Uint32(data)
-
-			if packetLength != 10 {
-				return ErrUnexpectedResponse
 			}
 		}
 
 		// Request ID - int32
 		{
-			data := make([]byte, 4)
+			var requestID int32
 
-			n, err := (*r.r).Read(data)
-
-			if err != nil {
+			if err := binary.Read(r.r, binary.LittleEndian, &requestID); err != nil {
 				return err
 			}
-
-			if n < 4 {
-				return io.EOF
-			}
-
-			requestID := int32(binary.LittleEndian.Uint32(data))
 
 			if requestID == -1 {
 				return ErrInvalidPassword
@@ -152,19 +133,13 @@ func (r *RCON) Login(password string) error {
 
 		// Type - int32
 		{
-			data := make([]byte, 4)
+			var packetType int32
 
-			n, err := (*r.r).Read(data)
-
-			if err != nil {
+			if err := binary.Read(r.r, binary.LittleEndian, &packetType); err != nil {
 				return err
 			}
 
-			if n < 4 {
-				return io.EOF
-			}
-
-			if binary.LittleEndian.Uint32(data) != 2 {
+			if packetType != 2 {
 				return ErrUnexpectedResponse
 			}
 		}
@@ -173,29 +148,27 @@ func (r *RCON) Login(password string) error {
 		{
 			data := make([]byte, packetLength-8)
 
-			n, err := (*r.r).Read(data)
-
-			if err != nil {
+			if _, err := (*r.r).Read(data); err != nil {
 				return err
-			}
-
-			if n < int(packetLength-8) {
-				return io.EOF
 			}
 		}
 	}
 
 	r.authSuccess = true
 
-	(*r.Conn).SetReadDeadline(time.Time{})
+	if err := (*r.conn).SetReadDeadline(time.Time{}); err != nil {
+		return err
+	}
 
 	go (func() {
-		<-time.NewTimer(time.Millisecond * 250).C
+		for {
+			// TODO figure out EOF issue, and how to not continuously loop with EOF errors when client is open
 
-		for r.Conn != nil {
-			r.readMessage()
+			err := r.readMessage()
 
-			// TODO proper error handling of `r.readMessage()` but ignore 'use of closed network connection' when client is closed
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 	})()
 
@@ -203,7 +176,7 @@ func (r *RCON) Login(password string) error {
 }
 
 func (r *RCON) Run(command string) error {
-	if r.Conn == nil {
+	if r.conn == nil {
 		return ErrNotConnected
 	}
 
@@ -216,41 +189,34 @@ func (r *RCON) Run(command string) error {
 	// Command packet
 	// https://wiki.vg/RCON#2:_Command
 	{
-		packet := NewPacket()
+		buf := &bytes.Buffer{}
 
-		// Length (int32)
-		if err := packet.WriteInt32LE(int32(10 + len(command))); err != nil {
+		// Length - int32
+		if err := binary.Write(buf, binary.LittleEndian, int32(10+len(command))); err != nil {
 			return err
 		}
 
-		// Request ID (int32)
-		if err := packet.WriteInt32LE(int32(r.requestID)); err != nil {
+		// Request ID - int32
+		if err := binary.Write(buf, binary.LittleEndian, r.requestID); err != nil {
 			return err
 		}
 
-		// Type (int32) - 2
-		if err := packet.WriteInt32LE(2); err != nil {
+		// Type - int32
+		if err := binary.Write(buf, binary.LittleEndian, int32(2)); err != nil {
 			return err
 		}
 
-		// Payload (null-terminated string)
-		if err := packet.WriteBytes(append([]byte(command), 0x00)); err != nil {
+		// Payload - null-terminated string
+		if _, err := buf.Write(append([]byte(command), 0x00)); err != nil {
 			return err
 		}
 
-		// Padding (null byte) - 0x00
-		if err := packet.WriteByte(0x00); err != nil {
+		if err := buf.WriteByte(0x00); err != nil {
 			return err
 		}
 
-		n, err := packet.WriteTo(*r.Conn)
-
-		if err != nil {
+		if _, err := io.Copy(*r.conn, buf); err != nil {
 			return err
-		}
-
-		if n != int64(14+len(command)) {
-			return ErrUnexpectedResponse
 		}
 	}
 
@@ -261,13 +227,13 @@ func (r *RCON) Close() error {
 	r.authSuccess = false
 	r.requestID = 0
 
-	if r.Conn != nil {
-		if err := (*r.Conn).Close(); err != nil {
+	if r.conn != nil {
+		if err := (*r.conn).Close(); err != nil {
 			return err
 		}
 	}
 
-	r.Conn = nil
+	r.conn = nil
 
 	return nil
 }
@@ -280,6 +246,7 @@ func (r *RCON) readMessage() error {
 
 		// Length - int32
 		{
+			// TODO convert to binary.Read() for the rest of the package
 			data := make([]byte, 4)
 
 			n, err := (*r.r).Read(data)

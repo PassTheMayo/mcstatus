@@ -4,40 +4,28 @@ import (
 	"io"
 )
 
-func readString(r io.Reader) (string, error) {
-	strLength, _, err := readVarInt(r)
+func readString(r io.Reader) ([]byte, error) {
+	length, _, err := readVarInt(r)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	result := make([]byte, 0)
+	data := make([]byte, length)
 
-	for i := 0; i < int(strLength); {
-		data := make([]byte, 4096)
-
-		n, err := r.Read(data)
-
-		if err != nil {
-			return "", err
-		}
-
-		result = append(result, data[:n]...)
-
-		i += n
+	if _, err := io.ReadFull(r, data); err != nil {
+		return nil, err
 	}
 
-	return string(result), err
+	return data, nil
 }
 
 func writeString(val string, w io.Writer) error {
-	_, err := writeVarInt(int32(len(val)), w)
-
-	if err != nil {
+	if _, err := writeVarInt(int32(len(val)), w); err != nil {
 		return err
 	}
 
-	_, err = w.Write([]byte(val))
+	_, err := w.Write([]byte(val))
 
 	return err
 }

@@ -2,6 +2,7 @@ package mcstatus
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -74,34 +75,36 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 
 	r := bufio.NewReader(conn)
 
-	conn.SetDeadline(time.Now().Add(opts.Timeout))
+	if err = conn.SetDeadline(time.Now().Add(opts.Timeout)); err != nil {
+		return nil, err
+	}
 
 	// Unconnected ping packet
 	// https://wiki.vg/Raknet_Protocol#Unconnected_Ping
 	{
-		packet := NewPacket()
+		buf := &bytes.Buffer{}
 
-		// Packet ID (byte) - 0x01
-		if err = packet.WriteByte(0x01); err != nil {
+		// Packet ID - byte
+		if err := buf.WriteByte(0x01); err != nil {
 			return nil, err
 		}
 
-		// Time (int64)
-		if err = packet.WriteInt64BE(time.Now().UnixNano() / int64(time.Millisecond)); err != nil {
+		// Time - int64
+		if err := binary.Write(buf, binary.BigEndian, time.Now().UnixNano()/int64(time.Millisecond)); err != nil {
 			return nil, err
 		}
 
-		// Magic (bytes)
-		if err = packet.WriteBytes(bedrockMagic); err != nil {
+		// Magic - bytes
+		if _, err := buf.Write(bedrockMagic); err != nil {
 			return nil, err
 		}
 
-		// Client GUID (int64)
-		if err = packet.WriteInt64BE(opts.ClientGUID); err != nil {
+		// Client GUID - int64
+		if err := binary.Write(buf, binary.BigEndian, opts.ClientGUID); err != nil {
 			return nil, err
 		}
 
-		if _, err = packet.WriteTo(conn); err != nil {
+		if _, err := io.Copy(conn, buf); err != nil {
 			return nil, err
 		}
 	}
@@ -114,19 +117,13 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 	{
 		// Type - byte
 		{
-			data := make([]byte, 1)
-
-			n, err := r.Read(data)
+			v, err := r.ReadByte()
 
 			if err != nil {
 				return nil, err
 			}
 
-			if n < 1 {
-				return nil, io.EOF
-			}
-
-			if data[0] != 0x1C {
+			if v != 0x1C {
 				return nil, ErrUnexpectedResponse
 			}
 		}
@@ -135,75 +132,39 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 		{
 			data := make([]byte, 8)
 
-			n, err := r.Read(data)
-
-			if err != nil {
+			if _, err := r.Read(data); err != nil {
 				return nil, err
-			}
-
-			if n < 8 {
-				return nil, io.EOF
 			}
 		}
 
 		// Server GUID - int64
 		{
-			data := make([]byte, 8)
-
-			n, err := r.Read(data)
-
-			if err != nil {
+			if err := binary.Read(r, binary.BigEndian, &serverGUID); err != nil {
 				return nil, err
 			}
-
-			if n < 8 {
-				return nil, io.EOF
-			}
-
-			serverGUID = int64(binary.BigEndian.Uint64(data))
 		}
 
 		// Magic - bytes
 		{
 			data := make([]byte, 16)
 
-			n, err := r.Read(data)
-
-			if err != nil {
+			if _, err := r.Read(data); err != nil {
 				return nil, err
-			}
-
-			if n < 16 {
-				return nil, io.EOF
 			}
 		}
 
 		// Server ID - string
 		{
-			lengthData := make([]byte, 2)
+			var length uint16
 
-			n, err := r.Read(lengthData)
-
-			if err != nil {
+			if err := binary.Read(r, binary.BigEndian, &length); err != nil {
 				return nil, err
 			}
-
-			if n < 2 {
-				return nil, io.EOF
-			}
-
-			length := binary.BigEndian.Uint16(lengthData)
 
 			data := make([]byte, length)
 
-			n, err = r.Read(data)
-
-			if err != nil {
+			if _, err = r.Read(data); err != nil {
 				return nil, err
-			}
-
-			if n < int(length) {
-				return nil, io.EOF
 			}
 
 			response = string(data)
@@ -258,13 +219,13 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 		return nil, err
 	}
 
-	descriptionLine1, err := NewDescription(splitResponse[1])
+	descriptionLine1, err := parseDescription(splitResponse[1])
 
 	if err != nil {
 		return nil, err
 	}
 
-	descriptionLine2, err := NewDescription(splitResponse[7])
+	descriptionLine2, err := parseDescription(splitResponse[7])
 
 	if err != nil {
 		return nil, err

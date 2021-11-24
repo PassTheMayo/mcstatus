@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	formattingColorCodeLookupTable = map[rune]ColorName{
+	formattingColorCodeLookupTable = map[rune]string{
 		'0': "black",
 		'1': "dark_blue",
 		'2': "dark_green",
@@ -26,7 +26,7 @@ var (
 		'f': "white",
 		'g': "minecoin_gold",
 	}
-	colorNameLookupTable = map[ColorName]rune{
+	colorNameLookupTable = map[string]rune{
 		"black":         '0',
 		"dark_blue":     '1',
 		"dark_green":    '2',
@@ -45,7 +45,7 @@ var (
 		"white":         'f',
 		"minecoin_gold": 'g',
 	}
-	htmlColorLookupTable = map[ColorName]string{
+	htmlColorLookupTable = map[string]string{
 		"black":         "#000000",
 		"dark_blue":     "#0000aa",
 		"dark_green":    "#00aa00",
@@ -66,37 +66,15 @@ var (
 	}
 )
 
-type ColorName string
-
-const (
-	ColorNameBlack        ColorName = "black"
-	ColorNameDarkBlue     ColorName = "dark_blue"
-	ColorNameDarkGreen    ColorName = "dark_green"
-	ColorNameDarkAqua     ColorName = "dark_aqua"
-	ColorNameDarkRed      ColorName = "dark_red"
-	ColorNameDarkPurple   ColorName = "dark_purple"
-	ColorNameGold         ColorName = "gold"
-	ColorNameGray         ColorName = "gray"
-	ColorNameDarkGray     ColorName = "dark_gray"
-	ColorNameBlue         ColorName = "blue"
-	ColorNameGreen        ColorName = "green"
-	ColorNameAqua         ColorName = "aqua"
-	ColorNameRed          ColorName = "red"
-	ColorNameLightPurple  ColorName = "light_purple"
-	ColorNameYellow       ColorName = "yellow"
-	ColorNameWhite        ColorName = "white"
-	ColorNameMinecoinGold ColorName = "minecoin_gold"
-)
-
 // FormatItem is a formatting item parsed from the description for easy use
 type FormatItem struct {
-	Text          string    `json:"text"`
-	Color         ColorName `json:"color"`
-	Obfuscated    bool      `json:"obfuscated"`
-	Bold          bool      `json:"bold"`
-	Strikethrough bool      `json:"strikethrough"`
-	Underline     bool      `json:"underline"`
-	Italic        bool      `json:"italic"`
+	Text          string `json:"text"`
+	Color         string `json:"color"`
+	Obfuscated    bool   `json:"obfuscated"`
+	Bold          bool   `json:"bold"`
+	Strikethrough bool   `json:"strikethrough"`
+	Underline     bool   `json:"underline"`
+	Italic        bool   `json:"italic"`
 }
 
 // Description contains helper functions for reading and writing the description
@@ -104,8 +82,7 @@ type Description struct {
 	Tree []FormatItem `json:"tree"`
 }
 
-// NewDescription parses the description as a string or Chat object into a tree
-func NewDescription(desc interface{}) (*Description, error) {
+func parseDescription(desc interface{}) (*Description, error) {
 	if v, ok := desc.(string); ok {
 		tree, err := parseString(v)
 
@@ -140,7 +117,7 @@ func (d Description) String() string {
 	result := ""
 
 	for _, v := range d.Tree {
-		if v.Color != ColorNameWhite {
+		if v.Color != "white" {
 			colorCode, ok := colorNameLookupTable[v.Color]
 
 			if ok {
@@ -279,7 +256,7 @@ func parseChatObject(m map[string]interface{}) string {
 	color, ok := m["color"].(string)
 
 	if ok {
-		code, ok := colorNameLookupTable[ColorName(color)]
+		code, ok := colorNameLookupTable[color]
 
 		if ok {
 			result += "\u00A7" + string(code)
@@ -338,7 +315,7 @@ func parseString(s string) ([]FormatItem, error) {
 
 	item := FormatItem{
 		Text:  "",
-		Color: ColorNameWhite,
+		Color: "white",
 	}
 
 	r := strings.NewReader(s)
@@ -448,7 +425,7 @@ func parseString(s string) ([]FormatItem, error) {
 
 					item = FormatItem{
 						Text:  "",
-						Color: ColorNameWhite,
+						Color: "white",
 					}
 				}
 			}
