@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/PassTheMayo/mcstatus"
+	"github.com/PassTheMayo/mcstatus/v2"
 )
 
 func TestStatusLegacy(t *testing.T) {

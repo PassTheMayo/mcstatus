@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PassTheMayo/mcstatus"
+	"github.com/PassTheMayo/mcstatus/v2"
 )
 
 func TestVote(t *testing.T) {

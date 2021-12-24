@@ -3,7 +3,7 @@ package mcstatus_test
 import (
 	"testing"
 
-	"github.com/PassTheMayo/mcstatus"
+	"github.com/PassTheMayo/mcstatus/v2"
 )
 
 func TestBasicQuery(t *testing.T) {
