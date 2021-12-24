@@ -475,7 +475,7 @@ func FullQuery(host string, port uint16, options ...QueryOptions) (*FullQueryRes
 					break
 				}
 
-				key := string(data[:len(data)-1])
+				key := decodeASCII(data[:len(data)-1])
 
 				data, err = r.ReadBytes(0x00)
 
@@ -487,7 +487,7 @@ func FullQuery(host string, port uint16, options ...QueryOptions) (*FullQueryRes
 					break
 				}
 
-				value := string(data[:len(data)-1])
+				value := decodeASCII(data[:len(data)-1])
 
 				response.Data[key] = value
 			}
