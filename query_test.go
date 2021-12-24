@@ -1,6 +1,7 @@
 package mcstatus_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/PassTheMayo/mcstatus/v2"
@@ -15,9 +16,11 @@ func TestBasicQuery(t *testing.T) {
 }
 
 func TestFullQuery(t *testing.T) {
-	_, err := mcstatus.FullQuery("localhost", 25565)
+	v, err := mcstatus.FullQuery("play.dogecraft.net", 25565)
 
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	fmt.Printf("%+v\n", v)
 }

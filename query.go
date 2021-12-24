@@ -483,10 +483,6 @@ func FullQuery(host string, port uint16, options ...QueryOptions) (*FullQueryRes
 					return nil, err
 				}
 
-				if len(data) < 2 {
-					break
-				}
-
 				value := decodeASCII(data[:len(data)-1])
 
 				response.Data[key] = value
