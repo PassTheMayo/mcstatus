@@ -15,4 +15,6 @@ var (
 	ErrInvalidPassword = errors.New("incorrect RCON password")
 	// ErrNotLoggedIn means the client attempted to execute a command before a login was successful
 	ErrNotLoggedIn = errors.New("RCON client attempted to send message before successful login")
+	// ErrDecodeUTF16OddLength means a UTF-16 was attempted to be decoded from a byte array that was an odd length
+	ErrDecodeUTF16OddLength = errors.New("attempted to decode UTF-16 byte array with an odd length")
 )

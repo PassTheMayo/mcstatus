@@ -66,7 +66,7 @@ var (
 	}
 )
 
-// FormatItem is a formatting item parsed from the description for easy use
+// FormatItem is a formatting item parsed from the MOTD for easy use
 type FormatItem struct {
 	Text          string `json:"text"`
 	Color         string `json:"color"`
@@ -77,12 +77,12 @@ type FormatItem struct {
 	Italic        bool   `json:"italic"`
 }
 
-// Description contains helper functions for reading and writing the description
-type Description struct {
-	Tree []FormatItem `json:"tree"`
+// MOTD contains helper functions for reading and writing the MOTD from a server
+type MOTD struct {
+	Tree []FormatItem `json:"-"`
 }
 
-func parseDescription(desc interface{}) (*Description, error) {
+func parseMOTD(desc interface{}) (*MOTD, error) {
 	if v, ok := desc.(string); ok {
 		tree, err := parseString(v)
 
@@ -90,7 +90,7 @@ func parseDescription(desc interface{}) (*Description, error) {
 			return nil, err
 		}
 
-		return &Description{
+		return &MOTD{
 			Tree: tree,
 		}, nil
 	}
@@ -104,7 +104,7 @@ func parseDescription(desc interface{}) (*Description, error) {
 			return nil, err
 		}
 
-		return &Description{
+		return &MOTD{
 			Tree: tree,
 		}, nil
 	}
@@ -113,10 +113,10 @@ func parseDescription(desc interface{}) (*Description, error) {
 }
 
 // String returns the description with formatting
-func (d Description) String() string {
+func (m MOTD) String() string {
 	result := ""
 
-	for _, v := range d.Tree {
+	for _, v := range m.Tree {
 		if v.Color != "white" {
 			colorCode, ok := colorNameLookupTable[v.Color]
 
@@ -152,15 +152,15 @@ func (d Description) String() string {
 }
 
 // Raw returns the raw description with formatting
-func (d Description) Raw() string {
-	return d.String()
+func (m MOTD) Raw() string {
+	return m.String()
 }
 
 // Clean returns the description with no formatting
-func (d Description) Clean() string {
+func (m MOTD) Clean() string {
 	result := ""
 
-	for _, v := range d.Tree {
+	for _, v := range m.Tree {
 		result += v.Text
 	}
 
@@ -168,10 +168,10 @@ func (d Description) Clean() string {
 }
 
 // HTML returns the description with HTML formatting
-func (d Description) HTML() string {
+func (m MOTD) HTML() string {
 	result := "<span>"
 
-	for _, v := range d.Tree {
+	for _, v := range m.Tree {
 		classes := make([]string, 0)
 		styles := make(map[string]string)
 

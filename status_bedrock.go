@@ -23,20 +23,19 @@ var (
 )
 
 type BedrockStatusResponse struct {
-	ServerGUID      int64       `json:"server_guid"`
-	Edition         string      `json:"edition"`
-	MOTDLine1       Description `json:"motd_line_1"`
-	MOTDLine2       Description `json:"motd_line_2"`
-	ProtocolVersion int64       `json:"protocol_version"`
-	Version         string      `json:"version"`
-	OnlinePlayers   int64       `json:"online_players"`
-	MaxPlayers      int64       `json:"max_players"`
-	ServerID        uint64      `json:"server_id"`
-	Gamemode        string      `json:"gamemode"`
-	GamemodeID      int64       `json:"gamemode_id"`
-	PortIPv4        uint16      `json:"port_ipv4"`
-	PortIPv6        uint16      `json:"port_ipv6"`
-	SRVResult       *SRVRecord  `json:"srv_result"`
+	ServerGUID      int64      `json:"server_guid"`
+	Edition         string     `json:"edition"`
+	MOTD            MOTD       `json:"motd"`
+	ProtocolVersion int64      `json:"protocol_version"`
+	Version         string     `json:"version"`
+	OnlinePlayers   int64      `json:"online_players"`
+	MaxPlayers      int64      `json:"max_players"`
+	ServerID        uint64     `json:"server_id"`
+	Gamemode        string     `json:"gamemode"`
+	GamemodeID      int64      `json:"gamemode_id"`
+	PortIPv4        uint16     `json:"port_ipv4"`
+	PortIPv6        uint16     `json:"port_ipv6"`
+	SRVResult       *SRVRecord `json:"srv_result"`
 }
 
 type BedrockStatusOptions struct {
@@ -219,13 +218,7 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 		return nil, err
 	}
 
-	descriptionLine1, err := parseDescription(splitResponse[1])
-
-	if err != nil {
-		return nil, err
-	}
-
-	descriptionLine2, err := parseDescription(splitResponse[7])
+	motd, err := parseMOTD(splitResponse[1] + "\n" + splitResponse[7])
 
 	if err != nil {
 		return nil, err
@@ -234,8 +227,7 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 	return &BedrockStatusResponse{
 		ServerGUID:      serverGUID,
 		Edition:         splitResponse[0],
-		MOTDLine1:       *descriptionLine1,
-		MOTDLine2:       *descriptionLine2,
+		MOTD:            *motd,
 		ProtocolVersion: protocolVersion,
 		Version:         splitResponse[3],
 		OnlinePlayers:   onlinePlayers,

@@ -26,7 +26,7 @@ type QueryOptions struct {
 }
 
 type BasicQueryResponse struct {
-	MOTD          Description
+	MOTD          MOTD
 	GameType      string
 	Map           string
 	OnlinePlayers uint64
@@ -201,7 +201,7 @@ func BasicQuery(host string, port uint16, options ...QueryOptions) (*BasicQueryR
 				return nil, err
 			}
 
-			description, err := parseDescription(string(data[:len(data)-1]))
+			description, err := parseMOTD(string(data[:len(data)-1]))
 
 			if err != nil {
 				return nil, err

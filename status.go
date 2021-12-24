@@ -19,7 +19,7 @@ var (
 	}
 )
 
-type rawStatus struct {
+type rawJavaStatus struct {
 	Version struct {
 		Name     string `json:"name"`
 		Protocol int    `json:"protocol"`
@@ -49,9 +49,9 @@ type JavaStatusResponse struct {
 			ID   string `json:"id"`
 		} `json:"sample"`
 	} `json:"players"`
-	Description Description `json:"description"`
-	Favicon     Favicon     `json:"favicon"`
-	SRVResult   *SRVRecord  `json:"srv_result"`
+	MOTD      MOTD       `json:"motd"`
+	Favicon   Favicon    `json:"favicon"`
+	SRVResult *SRVRecord `json:"srv_result"`
 }
 
 type JavaStatusOptions struct {
@@ -187,24 +187,24 @@ func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatus
 				return nil, err
 			}
 
-			result := &rawStatus{}
+			result := &rawJavaStatus{}
 
 			if err = json.Unmarshal(data, result); err != nil {
 				return nil, err
 			}
 
-			description, err := parseDescription(result.Description)
+			motd, err := parseMOTD(result.Description)
 
 			if err != nil {
 				return nil, err
 			}
 
 			return &JavaStatusResponse{
-				Version:     result.Version,
-				Players:     result.Players,
-				Description: *description,
-				Favicon:     parseFavicon(result.Favicon),
-				SRVResult:   srvResult,
+				Version:   result.Version,
+				Players:   result.Players,
+				MOTD:      *motd,
+				Favicon:   parseFavicon(result.Favicon),
+				SRVResult: srvResult,
 			}, nil
 		}
 	}
