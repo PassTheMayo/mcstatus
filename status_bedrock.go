@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"math/rand"
 	"net"
 	"strconv"
 	"strings"
@@ -245,7 +244,7 @@ func parseBedrockStatusOptions(opts ...BedrockStatusOptions) BedrockStatusOption
 	if len(opts) < 1 {
 		options := BedrockStatusOptions(defaultBedrockStatusOptions)
 
-		options.ClientGUID = rand.Int63()
+		options.ClientGUID = 2
 
 		return options
 	}
