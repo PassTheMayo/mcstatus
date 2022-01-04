@@ -23,17 +23,17 @@ var (
 
 type BedrockStatusResponse struct {
 	ServerGUID      int64      `json:"server_guid"`
-	Edition         string     `json:"edition"`
-	MOTD            MOTD       `json:"motd"`
-	ProtocolVersion int64      `json:"protocol_version"`
-	Version         string     `json:"version"`
-	OnlinePlayers   int64      `json:"online_players"`
-	MaxPlayers      int64      `json:"max_players"`
-	ServerID        uint64     `json:"server_id"`
-	Gamemode        string     `json:"gamemode"`
-	GamemodeID      int64      `json:"gamemode_id"`
-	PortIPv4        uint16     `json:"port_ipv4"`
-	PortIPv6        uint16     `json:"port_ipv6"`
+	Edition         *string    `json:"edition"`
+	MOTD            *MOTD      `json:"motd"`
+	ProtocolVersion *int64     `json:"protocol_version"`
+	Version         *string    `json:"version"`
+	OnlinePlayers   *int64     `json:"online_players"`
+	MaxPlayers      *int64     `json:"max_players"`
+	ServerID        *uint64    `json:"server_id"`
+	Gamemode        *string    `json:"gamemode"`
+	GamemodeID      *int64     `json:"gamemode_id"`
+	PortIPv4        *uint16    `json:"port_ipv4"`
+	PortIPv6        *uint16    `json:"port_ipv6"`
 	SRVResult       *SRVRecord `json:"srv_result"`
 }
 
@@ -108,7 +108,7 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 	}
 
 	var serverGUID int64
-	var response string
+	var serverID string
 
 	// Unconnected pong packet
 	// https://wiki.vg/Raknet_Protocol#Unconnected_Pong
@@ -165,79 +165,170 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 				return nil, err
 			}
 
-			response = string(data)
+			serverID = string(data)
 		}
 	}
 
-	splitResponse := strings.Split(response, ";")
-
-	if len(splitResponse) < 12 {
-		return nil, ErrUnexpectedResponse
-	}
-
-	protocolVersion, err := strconv.ParseInt(splitResponse[2], 10, 64)
-
-	if err != nil {
-		return nil, err
-	}
-
-	onlinePlayers, err := strconv.ParseInt(splitResponse[4], 10, 64)
-
-	if err != nil {
-		return nil, err
-	}
-
-	maxPlayers, err := strconv.ParseInt(splitResponse[5], 10, 64)
-
-	if err != nil {
-		return nil, err
-	}
-
-	serverID, err := strconv.ParseUint(splitResponse[6], 10, 64)
-
-	if err != nil {
-		return nil, err
-	}
-
-	gamemodeID, err := strconv.ParseInt(splitResponse[9], 10, 64)
-
-	if err != nil {
-		return nil, err
-	}
-
-	portIPv4, err := strconv.ParseInt(splitResponse[10], 10, 64)
-
-	if err != nil {
-		return nil, err
-	}
-
-	portIPv6, err := strconv.ParseInt(splitResponse[11], 10, 64)
-
-	if err != nil {
-		return nil, err
-	}
-
-	motd, err := parseMOTD(splitResponse[1] + "\n" + splitResponse[7])
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &BedrockStatusResponse{
+	response := &BedrockStatusResponse{
 		ServerGUID:      serverGUID,
-		Edition:         splitResponse[0],
-		MOTD:            *motd,
-		ProtocolVersion: protocolVersion,
-		Version:         splitResponse[3],
-		OnlinePlayers:   onlinePlayers,
-		MaxPlayers:      maxPlayers,
-		ServerID:        serverID,
-		Gamemode:        splitResponse[8],
-		GamemodeID:      gamemodeID,
-		PortIPv4:        uint16(portIPv4),
-		PortIPv6:        uint16(portIPv6),
+		Edition:         nil,
+		MOTD:            nil,
+		ProtocolVersion: nil,
+		Version:         nil,
+		OnlinePlayers:   nil,
+		MaxPlayers:      nil,
+		ServerID:        nil,
+		Gamemode:        nil,
+		GamemodeID:      nil,
+		PortIPv4:        nil,
+		PortIPv6:        nil,
 		SRVResult:       srvResult,
-	}, nil
+	}
+
+	splitID := strings.Split(serverID, ";")
+
+	var motd string
+
+	for k, v := range splitID {
+		if len(v) < 1 {
+			continue
+		}
+
+		switch k {
+		case 0:
+			{
+				response.Edition = &v
+
+				break
+			}
+		case 1:
+			{
+				motd = splitID[1]
+
+				break
+			}
+		case 2:
+			{
+				protocolVersion, err := strconv.ParseInt(splitID[2], 10, 64)
+
+				if err != nil {
+					return nil, err
+				}
+
+				response.ProtocolVersion = &protocolVersion
+
+				break
+			}
+		case 3:
+			{
+				response.Version = &splitID[3]
+
+				break
+			}
+		case 4:
+			{
+				onlinePlayers, err := strconv.ParseInt(splitID[4], 10, 64)
+
+				if err != nil {
+					return nil, err
+				}
+
+				response.OnlinePlayers = &onlinePlayers
+
+				break
+			}
+		case 5:
+			{
+				maxPlayers, err := strconv.ParseInt(splitID[5], 10, 64)
+
+				if err != nil {
+					return nil, err
+				}
+
+				response.MaxPlayers = &maxPlayers
+
+				break
+			}
+		case 6:
+			{
+				serverID, err := strconv.ParseUint(splitID[6], 10, 64)
+
+				if err != nil {
+					return nil, err
+				}
+
+				response.ServerID = &serverID
+
+				break
+			}
+		case 7:
+			{
+				motd += "\n" + splitID[7]
+
+				break
+			}
+		case 8:
+			{
+				response.Gamemode = &splitID[8]
+
+				break
+			}
+		case 9:
+			{
+				gamemodeID, err := strconv.ParseInt(splitID[9], 10, 64)
+
+				if err != nil {
+					return nil, err
+				}
+
+				response.GamemodeID = &gamemodeID
+
+				break
+			}
+		case 10:
+			{
+				portIPv4, err := strconv.ParseInt(splitID[10], 10, 64)
+
+				if err != nil {
+					return nil, err
+				}
+
+				convertedIPv4 := uint16(portIPv4)
+
+				response.PortIPv4 = &convertedIPv4
+
+				break
+			}
+		case 11:
+			{
+				portIPv6, err := strconv.ParseInt(splitID[11], 10, 64)
+
+				if err != nil {
+					return nil, err
+				}
+
+				convertedIPv6 := uint16(portIPv6)
+
+				response.PortIPv6 = &convertedIPv6
+
+				break
+			}
+		}
+	}
+
+	if len(motd) > 0 {
+		parsedMOTD, err := parseMOTD(splitID[1] + "\n" + splitID[7])
+
+		if err != nil {
+			return nil, err
+		}
+
+		response.MOTD = parsedMOTD
+	}
+
+	fmt.Println(response)
+
+	return response, nil
 }
 
 func parseBedrockStatusOptions(opts ...BedrockStatusOptions) BedrockStatusOptions {

@@ -7,7 +7,7 @@ import (
 )
 
 func TestBedrockStatus(t *testing.T) {
-	_, err := mcstatus.StatusBedrock("localhost", 19132)
+	_, err := mcstatus.StatusBedrock("grandtheft.mcpe.me", 19132)
 
 	if err != nil {
 		t.Fatal(err)
