@@ -326,8 +326,6 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 		response.MOTD = parsedMOTD
 	}
 
-	fmt.Println(response)
-
 	return response, nil
 }
 
