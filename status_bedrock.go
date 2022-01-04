@@ -29,7 +29,7 @@ type BedrockStatusResponse struct {
 	Version         *string    `json:"version"`
 	OnlinePlayers   *int64     `json:"online_players"`
 	MaxPlayers      *int64     `json:"max_players"`
-	ServerID        *uint64    `json:"server_id"`
+	ServerID        *string    `json:"server_id"`
 	Gamemode        *string    `json:"gamemode"`
 	GamemodeID      *int64     `json:"gamemode_id"`
 	PortIPv4        *uint16    `json:"port_ipv4"`
@@ -251,13 +251,7 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 			}
 		case 6:
 			{
-				serverID, err := strconv.ParseUint(splitID[6], 10, 64)
-
-				if err != nil {
-					return nil, err
-				}
-
-				response.ServerID = &serverID
+				response.ServerID = &splitID[k]
 
 				break
 			}
