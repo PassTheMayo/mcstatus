@@ -3,7 +3,7 @@ package mcstatus_test
 import (
 	"testing"
 
-	"github.com/PassTheMayo/mcstatus/v2"
+	"github.com/PassTheMayo/mcstatus/v3"
 )
 
 func TestStatus(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/PassTheMayo/mcstatus/v2"
+	"github.com/PassTheMayo/mcstatus/v3"
 )
 
 func TestBasicQuery(t *testing.T) {
