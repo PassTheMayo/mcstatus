@@ -190,14 +190,14 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 	var motd string
 
 	for k, v := range splitID {
-		if len(v) < 1 {
+		if len(strings.Trim(v, " ")) < 1 {
 			continue
 		}
 
 		switch k {
 		case 0:
 			{
-				response.Edition = &v
+				response.Edition = &splitID[k]
 
 				break
 			}
@@ -221,7 +221,7 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 			}
 		case 3:
 			{
-				response.Version = &splitID[3]
+				response.Version = &splitID[k]
 
 				break
 			}
@@ -263,13 +263,13 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 			}
 		case 7:
 			{
-				motd += "\n" + splitID[7]
+				motd += "\n" + splitID[k]
 
 				break
 			}
 		case 8:
 			{
-				response.Gamemode = &splitID[8]
+				response.Gamemode = &splitID[k]
 
 				break
 			}
