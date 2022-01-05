@@ -299,11 +299,15 @@ func parseChatObject(m map[string]interface{}) string {
 		result += text
 	}
 
-	extra, ok := m["extra"].([]map[string]interface{})
+	extra, ok := m["extra"].([]interface{})
 
 	if ok {
 		for _, v := range extra {
-			result += parseChatObject(v)
+			v2, ok := v.(map[string]interface{})
+
+			if ok {
+				result += parseChatObject(v2)
+			}
 		}
 	}
 
