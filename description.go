@@ -335,6 +335,17 @@ func parseString(s string) ([]FormatItem, error) {
 			break
 		}
 
+		if char == '\n' {
+			tree = append(tree, item)
+
+			item = FormatItem{
+				Text:  "",
+				Color: "white",
+			}
+
+			continue
+		}
+
 		if char != '\u00A7' {
 			item.Text += string(char)
 
