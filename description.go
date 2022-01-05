@@ -339,7 +339,7 @@ func parseString(s string) ([]FormatItem, error) {
 			tree = append(tree, item)
 
 			item = FormatItem{
-				Text:  "",
+				Text:  "\n",
 				Color: "white",
 			}
 
