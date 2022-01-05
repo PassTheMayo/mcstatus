@@ -82,7 +82,7 @@ type MOTD struct {
 	Tree []FormatItem `json:"-"`
 }
 
-func parseMOTD(desc interface{}) (*MOTD, error) {
+func ParseMOTD(desc interface{}) (*MOTD, error) {
 	if v, ok := desc.(string); ok {
 		tree, err := parseString(v)
 

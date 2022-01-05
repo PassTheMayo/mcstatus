@@ -311,7 +311,7 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 	}
 
 	if len(motd) > 0 {
-		parsedMOTD, err := parseMOTD(splitID[1] + "\n" + splitID[7])
+		parsedMOTD, err := ParseMOTD(splitID[1] + "\n" + splitID[7])
 
 		if err != nil {
 			return nil, err

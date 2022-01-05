@@ -193,7 +193,7 @@ func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatus
 				return nil, err
 			}
 
-			motd, err := parseMOTD(result.Description)
+			motd, err := ParseMOTD(result.Description)
 
 			if err != nil {
 				return nil, err

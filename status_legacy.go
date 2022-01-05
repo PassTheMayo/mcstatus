@@ -138,7 +138,7 @@ func StatusLegacy(host string, port uint16, options ...JavaStatusLegacyOptions) 
 				return nil, err
 			}
 
-			motd, err := parseMOTD(split[3])
+			motd, err := ParseMOTD(split[3])
 
 			if err != nil {
 				return nil, err
@@ -173,7 +173,7 @@ func StatusLegacy(host string, port uint16, options ...JavaStatusLegacyOptions) 
 				return nil, err
 			}
 
-			motd, err := parseMOTD(split[0])
+			motd, err := ParseMOTD(split[0])
 
 			if err != nil {
 				return nil, err
