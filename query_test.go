@@ -8,7 +8,7 @@ import (
 )
 
 func TestBasicQuery(t *testing.T) {
-	_, err := mcstatus.BasicQuery("localhost", 25565)
+	_, err := mcstatus.BasicQuery("play.mineluxmc.com", 25565)
 
 	if err != nil {
 		t.Fatal(err)
@@ -16,7 +16,7 @@ func TestBasicQuery(t *testing.T) {
 }
 
 func TestFullQuery(t *testing.T) {
-	v, err := mcstatus.FullQuery("play.dogecraft.net", 25565)
+	v, err := mcstatus.FullQuery("20.212.168.234", 19132)
 
 	if err != nil {
 		t.Fatal(err)

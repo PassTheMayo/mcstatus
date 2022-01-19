@@ -34,6 +34,13 @@ type rawJavaStatus struct {
 	} `json:"players"`
 	Description interface{} `json:"description"`
 	Favicon     interface{} `json:"favicon"`
+	ModInfo     struct {
+		List []struct {
+			ID      string `json:"modid"`
+			Version string `json:"version"`
+		} `json:"modList"`
+		Type string `json:"type"`
+	} `json:"modinfo"`
 }
 
 type JavaStatusResponse struct {
@@ -49,10 +56,21 @@ type JavaStatusResponse struct {
 			ID   string `json:"id"`
 		} `json:"sample"`
 	} `json:"players"`
-	MOTD      MOTD          `json:"motd"`
-	Favicon   Favicon       `json:"favicon"`
-	SRVResult *SRVRecord    `json:"srv_result"`
-	Latency   time.Duration `json:"latency"`
+	MOTD      MOTD               `json:"motd"`
+	Favicon   Favicon            `json:"favicon"`
+	SRVResult *SRVRecord         `json:"srv_result"`
+	ModInfo   *JavaStatusModInfo `json:"mod_info"`
+	Latency   time.Duration      `json:"latency"`
+}
+
+type JavaStatusModInfo struct {
+	Type string          `json:"type"`
+	Mods []JavaStatusMod `json:"mods"`
+}
+
+type JavaStatusMod struct {
+	ID      string `json:"id"`
+	Version string `json:"version"`
 }
 
 type JavaStatusOptions struct {
@@ -181,7 +199,6 @@ func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatus
 			if err = json.Unmarshal(data, &result); err != nil {
 				return nil, err
 			}
-
 		}
 	}
 
@@ -252,14 +269,33 @@ func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatus
 		return nil, err
 	}
 
-	return &JavaStatusResponse{
+	response := &JavaStatusResponse{
 		Version:   result.Version,
 		Players:   result.Players,
 		MOTD:      *motd,
 		Favicon:   parseFavicon(result.Favicon),
 		SRVResult: srvResult,
 		Latency:   time.Since(pingStart),
-	}, nil
+		ModInfo:   nil,
+	}
+
+	if len(result.ModInfo.Type) > 0 {
+		mods := make([]JavaStatusMod, 0)
+
+		for _, mod := range result.ModInfo.List {
+			mods = append(mods, JavaStatusMod{
+				ID:      mod.ID,
+				Version: mod.Version,
+			})
+		}
+
+		response.ModInfo = &JavaStatusModInfo{
+			Type: result.ModInfo.Type,
+			Mods: mods,
+		}
+	}
+
+	return response, nil
 }
 
 func parseJavaStatusOptions(opts ...JavaStatusOptions) JavaStatusOptions {
