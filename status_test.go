@@ -7,7 +7,7 @@ import (
 )
 
 func TestStatus(t *testing.T) {
-	_, err := mcstatus.Status("play.pocketpixels.net", 25565)
+	_, err := mcstatus.Status("play.hypixel.net", 25565)
 
 	if err != nil {
 		t.Fatal(err)

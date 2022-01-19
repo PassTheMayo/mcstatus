@@ -6,7 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"io"
+	"math/rand"
 	"net"
 	"time"
 )
@@ -49,9 +49,10 @@ type JavaStatusResponse struct {
 			ID   string `json:"id"`
 		} `json:"sample"`
 	} `json:"players"`
-	MOTD      MOTD       `json:"motd"`
-	Favicon   Favicon    `json:"favicon"`
-	SRVResult *SRVRecord `json:"srv_result"`
+	MOTD      MOTD          `json:"motd"`
+	Favicon   Favicon       `json:"favicon"`
+	SRVResult *SRVRecord    `json:"srv_result"`
+	Latency   time.Duration `json:"latency"`
 }
 
 type JavaStatusOptions struct {
@@ -124,13 +125,7 @@ func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatus
 			return nil, err
 		}
 
-		finalPacket, err := writePacketLength(buf)
-
-		if err != nil {
-			return nil, err
-		}
-
-		if _, err := io.Copy(conn, finalPacket); err != nil {
+		if err := writePacket(buf, conn); err != nil {
 			return nil, err
 		}
 	}
@@ -141,20 +136,16 @@ func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatus
 		buf := &bytes.Buffer{}
 
 		// Packet ID - varint
-		if _, err := writeVarInt(0, buf); err != nil {
+		if _, err := writeVarInt(0x00, buf); err != nil {
 			return nil, err
 		}
 
-		finalPacket, err := writePacketLength(buf)
-
-		if err != nil {
-			return nil, err
-		}
-
-		if _, err := io.Copy(conn, finalPacket); err != nil {
+		if err := writePacket(buf, conn); err != nil {
 			return nil, err
 		}
 	}
+
+	var result rawJavaStatus
 
 	// Response packet
 	// https://wiki.vg/Server_List_Ping#Response
@@ -174,7 +165,7 @@ func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatus
 				return nil, err
 			}
 
-			if packetType != 0 {
+			if packetType != 0x00 {
 				return nil, ErrUnexpectedResponse
 			}
 		}
@@ -187,27 +178,88 @@ func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatus
 				return nil, err
 			}
 
-			result := &rawJavaStatus{}
-
-			if err = json.Unmarshal(data, result); err != nil {
+			if err = json.Unmarshal(data, &result); err != nil {
 				return nil, err
 			}
 
-			motd, err := ParseMOTD(result.Description)
+		}
+	}
+
+	payload := rand.Int63()
+
+	// Ping packet
+	// https://wiki.vg/Server_List_Ping#Ping
+	{
+		buf := &bytes.Buffer{}
+
+		// Packet ID - varint
+		if _, err := writeVarInt(0x01, buf); err != nil {
+			return nil, err
+		}
+
+		// Payload - int64
+		if err := binary.Write(buf, binary.BigEndian, payload); err != nil {
+			return nil, err
+		}
+
+		if err := writePacket(buf, conn); err != nil {
+			return nil, err
+		}
+	}
+
+	pingStart := time.Now()
+
+	// Pong packet
+	// https://wiki.vg/Server_List_Ping#Pong
+	{
+		// Packet length - varint
+		{
+			if _, _, err := readVarInt(r); err != nil {
+				return nil, err
+			}
+		}
+
+		// Packet type - varint
+		{
+			packetType, _, err := readVarInt(r)
 
 			if err != nil {
 				return nil, err
 			}
 
-			return &JavaStatusResponse{
-				Version:   result.Version,
-				Players:   result.Players,
-				MOTD:      *motd,
-				Favicon:   parseFavicon(result.Favicon),
-				SRVResult: srvResult,
-			}, nil
+			if packetType != 0x01 {
+				return nil, ErrUnexpectedResponse
+			}
+		}
+
+		// Payload - int64
+		{
+			var returnPayload int64
+
+			if err := binary.Read(r, binary.BigEndian, &returnPayload); err != nil {
+				return nil, err
+			}
+
+			if payload != returnPayload {
+				return nil, ErrUnexpectedResponse
+			}
 		}
 	}
+
+	motd, err := ParseMOTD(result.Description)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &JavaStatusResponse{
+		Version:   result.Version,
+		Players:   result.Players,
+		MOTD:      *motd,
+		Favicon:   parseFavicon(result.Favicon),
+		SRVResult: srvResult,
+		Latency:   time.Since(pingStart),
+	}, nil
 }
 
 func parseJavaStatusOptions(opts ...JavaStatusOptions) JavaStatusOptions {
