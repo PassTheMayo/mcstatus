@@ -4,19 +4,19 @@ A Go library for retrieving the status of a Minecraft server.
 ## Installation
 
 ```bash
-go get -u github.com/PassTheMayo/mcstatus
+go get github.com/PassTheMayo/mcstatus/v3
 ```
 
 ## Documentation
 
-https://pkg.go.dev/github.com/PassTheMayo/mcstatus
+https://pkg.go.dev/github.com/PassTheMayo/mcstatus/v3
 
 ## Usage
 
-### Status
+### Status (1.7+)
 
 ```go
-import "github.com/PassTheMayo/mcstatus"
+import "github.com/PassTheMayo/mcstatus/v3"
 
 func main() {
     response, err := mcstatus.Status("play.hypixel.net", 25565)
@@ -29,10 +29,26 @@ func main() {
 }
 ```
 
+### Legacy Status (< 1.7)
+
+```go
+import "github.com/PassTheMayo/mcstatus/v3"
+
+func main() {
+    response, err := mcstatus.StatusLegacy("play.hypixel.net", 25565)
+
+    if err != nil {
+        panic(err)
+    }
+
+    fmt.Println(response)
+}
+```
+
 ### Bedrock Status
 
 ```go
-import "github.com/PassTheMayo/mcstatus"
+import "github.com/PassTheMayo/mcstatus/v3"
 
 func main() {
     response, err := mcstatus.StatusBedrock("127.0.0.1", 19132)
@@ -48,7 +64,7 @@ func main() {
 ### Basic Query
 
 ```go
-import "github.com/PassTheMayo/mcstatus"
+import "github.com/PassTheMayo/mcstatus/v3"
 
 func main() {
     response, err := mcstatus.BasicQuery("play.hypixel.net", 25565)
@@ -64,7 +80,7 @@ func main() {
 ### Full Query
 
 ```go
-import "github.com/PassTheMayo/mcstatus"
+import "github.com/PassTheMayo/mcstatus/v3"
 
 func main() {
     response, err := mcstatus.FullQuery("play.hypixel.net", 25565)
@@ -80,7 +96,7 @@ func main() {
 ### RCON
 
 ```go
-import "github.com/PassTheMayo/mcstatus"
+import "github.com/PassTheMayo/mcstatus/v3"
 
 func main() {
     client := mcstatus.NewRCON()
@@ -108,7 +124,7 @@ func main() {
 ## Send Vote
 
 ```go
-import "github.com/PassTheMayo/mcstatus"
+import "github.com/PassTheMayo/mcstatus/v3"
 
 func main() {
     err := mcstatus.SendVote("127.0.0.1", 8192, mcstatus.VoteOptions{

@@ -2,6 +2,7 @@ package mcstatus
 
 import (
 	"fmt"
+	"html"
 	"reflect"
 	"strings"
 )
@@ -244,7 +245,7 @@ func (m MOTD) HTML() string {
 			result += "\""
 		}
 
-		result += fmt.Sprintf(">%s</span>", v.Text)
+		result += fmt.Sprintf(">%s</span>", html.EscapeString(v.Text))
 	}
 
 	return result + "</span>"
