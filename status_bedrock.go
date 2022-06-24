@@ -203,13 +203,13 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 			}
 		case 1:
 			{
-				motd = splitID[1]
+				motd = splitID[k]
 
 				break
 			}
 		case 2:
 			{
-				protocolVersion, err := strconv.ParseInt(splitID[2], 10, 64)
+				protocolVersion, err := strconv.ParseInt(splitID[k], 10, 64)
 
 				if err != nil {
 					return nil, err
@@ -227,7 +227,7 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 			}
 		case 4:
 			{
-				onlinePlayers, err := strconv.ParseInt(splitID[4], 10, 64)
+				onlinePlayers, err := strconv.ParseInt(splitID[k], 10, 64)
 
 				if err != nil {
 					return nil, err
@@ -239,7 +239,7 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 			}
 		case 5:
 			{
-				maxPlayers, err := strconv.ParseInt(splitID[5], 10, 64)
+				maxPlayers, err := strconv.ParseInt(splitID[k], 10, 64)
 
 				if err != nil {
 					return nil, err
@@ -269,7 +269,7 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 			}
 		case 9:
 			{
-				gamemodeID, err := strconv.ParseInt(splitID[9], 10, 64)
+				gamemodeID, err := strconv.ParseInt(splitID[k], 10, 64)
 
 				if err != nil {
 					return nil, err
@@ -281,7 +281,7 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 			}
 		case 10:
 			{
-				portIPv4, err := strconv.ParseInt(splitID[10], 10, 64)
+				portIPv4, err := strconv.ParseInt(splitID[k], 10, 64)
 
 				if err != nil {
 					return nil, err
@@ -295,7 +295,7 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 			}
 		case 11:
 			{
-				portIPv6, err := strconv.ParseInt(splitID[11], 10, 64)
+				portIPv6, err := strconv.ParseInt(splitID[k], 10, 64)
 
 				if err != nil {
 					return nil, err
@@ -311,7 +311,7 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 	}
 
 	if len(motd) > 0 {
-		parsedMOTD, err := ParseMOTD(splitID[1] + "\n" + splitID[7])
+		parsedMOTD, err := ParseMOTD(motd)
 
 		if err != nil {
 			return nil, err
