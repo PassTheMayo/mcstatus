@@ -45,7 +45,7 @@ type voteResponse struct {
 
 // SendVote sends a Votifier vote to the specified Minecraft server
 func SendVote(host string, port uint16, options VoteOptions) error {
-	conn, err := net.Dial("tcp4", fmt.Sprintf("%s:%d", host, port))
+	conn, err := net.DialTimeout("tcp4", fmt.Sprintf("%s:%d", host, port), options.Timeout)
 
 	if err != nil {
 		return err

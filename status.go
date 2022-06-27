@@ -99,7 +99,7 @@ func Status(host string, port uint16, options ...JavaStatusOptions) (*JavaStatus
 		}
 	}
 
-	conn, err := net.Dial("tcp4", fmt.Sprintf("%s:%d", host, port))
+	conn, err := net.DialTimeout("tcp4", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
 
 	if err != nil {
 		return nil, err

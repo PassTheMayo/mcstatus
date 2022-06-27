@@ -63,7 +63,7 @@ func StatusBedrock(host string, port uint16, options ...BedrockStatusOptions) (*
 		}
 	}
 
-	conn, err := net.Dial("udp", fmt.Sprintf("%s:%d", host, port))
+	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
 
 	if err != nil {
 		return nil, err

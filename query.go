@@ -44,7 +44,7 @@ type FullQueryResponse struct {
 func BasicQuery(host string, port uint16, options ...QueryOptions) (*BasicQueryResponse, error) {
 	opts := parseQueryOptions(options...)
 
-	conn, err := net.Dial("udp", fmt.Sprintf("%s:%d", host, port))
+	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
 
 	if err != nil {
 		return nil, err
@@ -296,7 +296,7 @@ func BasicQuery(host string, port uint16, options ...QueryOptions) (*BasicQueryR
 func FullQuery(host string, port uint16, options ...QueryOptions) (*FullQueryResponse, error) {
 	opts := parseQueryOptions(options...)
 
-	conn, err := net.Dial("udp", fmt.Sprintf("%s:%d", host, port))
+	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
 
 	if err != nil {
 		return nil, err

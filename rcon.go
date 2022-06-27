@@ -44,7 +44,7 @@ func NewRCON() *RCON {
 func (r *RCON) Dial(host string, port uint16, options ...RCONOptions) error {
 	opts := parseRCONOptions(options...)
 
-	conn, err := net.Dial("tcp4", fmt.Sprintf("%s:%d", host, port))
+	conn, err := net.DialTimeout("tcp4", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
 
 	if err != nil {
 		return err

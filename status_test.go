@@ -8,11 +8,11 @@ import (
 )
 
 func TestStatus(t *testing.T) {
-	v, err := mcstatus.Status("play.mc-complex.com", 25565)
+	response, err := mcstatus.Status("play.hypixel.net", 25565)
 
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	log.Printf("%+v\n", v.ModInfo)
+	log.Println(response)
 }

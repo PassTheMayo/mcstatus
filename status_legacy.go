@@ -60,7 +60,7 @@ func StatusLegacy(host string, port uint16, options ...JavaStatusLegacyOptions) 
 		}
 	}
 
-	conn, err := net.Dial("tcp4", fmt.Sprintf("%s:%d", host, port))
+	conn, err := net.DialTimeout("tcp4", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
 
 	if err != nil {
 		return nil, err
