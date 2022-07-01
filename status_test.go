@@ -1,18 +1,18 @@
 package mcstatus_test
 
 import (
-	"log"
+	"fmt"
 	"testing"
 
 	"github.com/PassTheMayo/mcstatus/v3"
 )
 
 func TestStatus(t *testing.T) {
-	response, err := mcstatus.Status("play.hypixel.net", 25565)
+	response, err := mcstatus.Status("localhost", 25565)
 
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	log.Println(response)
+	fmt.Println(response)
 }

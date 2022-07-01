@@ -35,9 +35,37 @@ type BasicQueryResponse struct {
 	HostIP        string
 }
 
+func (r BasicQueryResponse) String() string {
+	return fmt.Sprintf(
+		"Host: %s\nPort: %d\nPlayers: %d/%d\nMap: %s\nMOTD: %s",
+		r.HostIP,
+		r.HostPort,
+		r.OnlinePlayers,
+		r.MaxPlayers,
+		r.Map,
+		r.MOTD,
+	)
+}
+
 type FullQueryResponse struct {
 	Data    map[string]string
 	Players []string
+}
+
+func (r FullQueryResponse) String() string {
+	result := "Properties:\n"
+
+	for k, v := range r.Data {
+		result += fmt.Sprintf(" - %s: %s\n", k, v)
+	}
+
+	result += "\nPlayers:"
+
+	for _, v := range r.Players {
+		result += fmt.Sprintf("\n - %s", v)
+	}
+
+	return result
 }
 
 // BasicQuery runs a query on the server and returns basic information

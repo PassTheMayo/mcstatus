@@ -2,25 +2,28 @@ package mcstatus_test
 
 import (
 	"fmt"
+	"log"
 	"testing"
 
 	"github.com/PassTheMayo/mcstatus/v3"
 )
 
 func TestBasicQuery(t *testing.T) {
-	_, err := mcstatus.BasicQuery("play.mineluxmc.com", 25565)
+	response, err := mcstatus.BasicQuery("localhost", 25565)
 
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	log.Println(response)
 }
 
 func TestFullQuery(t *testing.T) {
-	v, err := mcstatus.FullQuery("20.212.168.234", 19132)
+	response, err := mcstatus.FullQuery("localhost", 25565)
 
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	fmt.Printf("%+v\n", v)
+	fmt.Println(response)
 }

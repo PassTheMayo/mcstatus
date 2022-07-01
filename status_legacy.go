@@ -25,6 +25,20 @@ type JavaStatusLegacyResponse struct {
 	SRVResult *SRVRecord               `json:"srv_result"`
 }
 
+func (r JavaStatusLegacyResponse) String() string {
+	result := "Version: "
+
+	if r.Version == nil {
+		result += "Unknown"
+	} else {
+		result += fmt.Sprintf("%s\nProtocol Version: %d", r.Version.Name, r.Version.Protocol)
+	}
+
+	result += fmt.Sprintf("\nPlayers: %d/%d\nMOTD: %s", r.Players.Online, r.Players.Max, r.MOTD)
+
+	return result
+}
+
 type JavaStatusLegacyVersion struct {
 	Name     string `json:"name"`
 	Protocol int    `json:"protocol"`

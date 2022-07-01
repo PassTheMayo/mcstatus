@@ -37,6 +37,56 @@ type BedrockStatusResponse struct {
 	SRVResult       *SRVRecord `json:"srv_result"`
 }
 
+func (r BedrockStatusResponse) String() string {
+	result := fmt.Sprintf("Server GUID: %d", r.ServerGUID)
+
+	if r.Edition != nil {
+		result += fmt.Sprintf("\nEdition: %s", *r.Edition)
+	}
+
+	if r.MOTD != nil {
+		result += fmt.Sprintf("\nMOTD: %s", *r.MOTD)
+	}
+
+	if r.ProtocolVersion != nil {
+		result += fmt.Sprintf("\nProtocol Version: %d", *r.ProtocolVersion)
+	}
+
+	if r.Version != nil {
+		result += fmt.Sprintf("\nVersion: %s", *r.Version)
+	}
+
+	if r.OnlinePlayers != nil {
+		result += fmt.Sprintf("\nPlayers: %d", *r.OnlinePlayers)
+	}
+
+	if r.MaxPlayers != nil {
+		result += fmt.Sprintf("/%d", *r.MaxPlayers)
+	}
+
+	if r.ServerID != nil {
+		result += fmt.Sprintf("\nServer ID: %s", *r.ServerID)
+	}
+
+	if r.Gamemode != nil {
+		result += fmt.Sprintf("\nGamemode: %s", *r.Gamemode)
+	}
+
+	if r.GamemodeID != nil {
+		result += fmt.Sprintf(" (%d)", *r.GamemodeID)
+	}
+
+	if r.PortIPv4 != nil {
+		result += fmt.Sprintf("\nPort IPv4: %d", *r.PortIPv4)
+	}
+
+	if r.PortIPv6 != nil {
+		result += fmt.Sprintf("\nPort IPv6: %d", *r.PortIPv6)
+	}
+
+	return result
+}
+
 type BedrockStatusOptions struct {
 	EnableSRV  bool
 	Timeout    time.Duration

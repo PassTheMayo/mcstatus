@@ -63,6 +63,25 @@ type JavaStatusResponse struct {
 	Latency   time.Duration      `json:"latency"`
 }
 
+func (r JavaStatusResponse) String() string {
+	result := fmt.Sprintf(
+		"Version: %s\nProtocol Version: %d\nPlayers: %d/%d\nMOTD: %s\nFavicon: ",
+		r.Version.Name,
+		r.Version.Protocol,
+		r.Players.Online,
+		r.Players.Max,
+		r.MOTD,
+	)
+
+	if r.Favicon.Exists() {
+		result += "No"
+	} else {
+		result += "Yes"
+	}
+
+	return result
+}
+
 type JavaStatusModInfo struct {
 	Type string          `json:"type"`
 	Mods []JavaStatusMod `json:"mods"`
